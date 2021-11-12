@@ -64,7 +64,8 @@ find_package(
              Declarative
              GlobalAccel
              KCMUtils
-             I18n)
+             I18n
+             Plasma)
 
 find_package(KDecoration2 REQUIRED)
 

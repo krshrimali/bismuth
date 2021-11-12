@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: none
+# SPDX-License-Identifier: MIT
+
+[Desktop Entry]
+Name=Bismuth
+Comment=Plasmoid for controlling Bismuth
+Icon=bismuth
+
+Type=Service
+Encoding=UTF-8
+
+X-Plasma-API=declarativeappletscript
+X-Plasma-MainScript=ui/main.qml
+
+X-KDE-ServiceTypes=Plasma/Applet
+X-KDE-Library=kcm_applet
+
+X-KDE-PluginInfo-Name=org.kde.plasma.bismuth
+X-KDE-PluginInfo-Category=Windows and Tasks
+X-KDE-PluginInfo-Version=1.0.0
+X-KDE-PluginInfo-Author=Mikhail Zolotukhin
+X-KDE-PluginInfo-Email=mail@genda.life
+X-KDE-PluginInfo-Website=github.com/Bismuth-Forge/bismuth
+X-KDE-PluginInfo-License=MIT
+X-KDE-PluginInfo-EnabledByDefault=true
+
+X-Plasma-NotificationArea=true
+X-Plasma-NotificationAreaCategory=SystemServices
