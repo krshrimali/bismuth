@@ -30,9 +30,8 @@ PlasmaComponents.Page {
         }
     }
 
-    Controls.ButtonGroup {
-        id: buttonGroup
-    }
+    // Mutually-exclusive group for the layout grid
+    Controls.ButtonGroup { id: buttonGroup }
 
     GridView {
         id: gridView
@@ -56,9 +55,7 @@ PlasmaComponents.Page {
             checked: model.index === root.currentLayout
             onClicked: root.currentLayout = model.index
             Controls.ButtonGroup.group: buttonGroup
-            Controls.ToolTip.text: model.name // TODO: Any way to use "native" tooltip here?
-            Controls.ToolTip.visible: hovered
-            Controls.ToolTip.delay: 1500
+            PlasmaComponents.ToolTip { text: model.name }
 
             Kirigami.Icon {
                 id: cardIcon

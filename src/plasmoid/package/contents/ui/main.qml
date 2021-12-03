@@ -19,7 +19,6 @@ Item {
     // TODO: Cannot use i18n() here.
     ListModel {
         id: layoutModel
-
         ListElement {
             name: "Tile Layout"
             icon: "bismuth-tile"
@@ -59,13 +58,12 @@ Item {
     Plasmoid.toolTipSubText: layoutModel.get(currentLayout).name
     Plasmoid.icon: currentLayout !== floatingLayout ? "bismuth-monochrome" : "bismuth-monochrome-disabled"
     Plasmoid.preferredRepresentation: Plasmoid.compactRepresentation
-    Plasmoid.fullRepresentation: FullRepresentation {} // Loaded from separate file
+    Plasmoid.fullRepresentation: FullRepresentation {} // Loaded from the separate file
     Plasmoid.compactRepresentation: PlasmaCore.IconItem {
         active: compactMouseArea.containsMouse
         source: plasmoid.icon
         MouseArea {
             id: compactMouseArea
-
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
             onClicked: {
@@ -184,7 +182,7 @@ Item {
         plasmoid.setActionSeparator("layoutSeparator")
 
         if (KCMShell.authorize("kcm_bismuth.desktop").length > 0) {
-            plasmoid.setAction("openSettings", i18n("Configure Window Tiling..."), "bismuth-monochrome")
+            plasmoid.setAction("openSettings", i18n("Configure Window Tiling…"), "bismuth-monochrome");
         }
     }
 }
