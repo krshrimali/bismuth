@@ -99,7 +99,6 @@ Item {
     }
 
     // Functions corresponding to the registered menu actions
-    // FIXME: causes memory leak
     function action_setTileLayout() {
         currentLayout = 0;
     }
@@ -133,51 +132,58 @@ Item {
     }
 
     function action_openSettings() {
-        KCMShell.openSystemSettings("kcm_bismuth")
+        KCMShell.openSystemSettings("kcm_bismuth");
     }
 
     Component.onCompleted: {
         // Menu actions
-        // FIXME: causes memory leak
         plasmoid.setAction("setTileLayout", layoutModel.get(0).name, layoutModel.get(0).icon)
         plasmoid.setActionGroup("setTileLayout", "layoutGroup")
-        plasmoid.action("setTileLayout").checkable = true
-        plasmoid.action("setTileLayout").checked = Qt.binding(function() { return (root.currentLayout === 0) })
+        plasmoid.action("setTileLayout").priority = 0; // Don't show this action in the plasmoid's header
+        plasmoid.action("setTileLayout").checkable = true;
+        plasmoid.action("setTileLayout").checked = Qt.binding(() => (root.currentLayout === 0));
 
         plasmoid.setAction("setMonocleLayout", layoutModel.get(1).name, layoutModel.get(1).icon)
         plasmoid.setActionGroup("setMonocleLayout", "layoutGroup")
-        plasmoid.action("setMonocleLayout").checkable = true
-        plasmoid.action("setMonocleLayout").checked = Qt.binding(function() { return (root.currentLayout === 1) })
+        plasmoid.action("setMonocleLayout").priority = 0;
+        plasmoid.action("setMonocleLayout").checkable = true;
+        plasmoid.action("setMonocleLayout").checked = Qt.binding(() => (root.currentLayout === 1));
 
         plasmoid.setAction("setColumnLayout", layoutModel.get(2).name, layoutModel.get(2).icon)
         plasmoid.setActionGroup("setColumnLayout", "layoutGroup")
-        plasmoid.action("setColumnLayout").checkable = true
-        plasmoid.action("setColumnLayout").checked = Qt.binding(function() { return (root.currentLayout === 2) })
+        plasmoid.action("setColumnLayout").priority = 0;
+        plasmoid.action("setColumnLayout").checkable = true;
+        plasmoid.action("setColumnLayout").checked = Qt.binding(() => (root.currentLayout === 2));
 
         plasmoid.setAction("setSpiralLayout", layoutModel.get(3).name, layoutModel.get(3).icon)
         plasmoid.setActionGroup("setSpiralLayout", "layoutGroup")
-        plasmoid.action("setSpiralLayout").checkable = true
-        plasmoid.action("setSpiralLayout").checked = Qt.binding(function() { return (root.currentLayout === 3) })
+        plasmoid.action("setSpiralLayout").priority = 0;
+        plasmoid.action("setSpiralLayout").checkable = true;
+        plasmoid.action("setSpiralLayout").checked = Qt.binding(() => (root.currentLayout === 3));
 
         plasmoid.setAction("setSpreadLayout", layoutModel.get(4).name, layoutModel.get(4).icon)
         plasmoid.setActionGroup("setSpreadLayout", "layoutGroup")
-        plasmoid.action("setSpreadLayout").checkable = true
-        plasmoid.action("setSpreadLayout").checked = Qt.binding(function() { return (root.currentLayout === 4) })
+        plasmoid.action("setSpreadLayout").priority = 0;
+        plasmoid.action("setSpreadLayout").checkable = true;
+        plasmoid.action("setSpreadLayout").checked = Qt.binding(() => (root.currentLayout === 4));
 
         plasmoid.setAction("setStairLayout", layoutModel.get(5).name, layoutModel.get(5).icon)
         plasmoid.setActionGroup("setStairLayout", "layoutGroup")
-        plasmoid.action("setStairLayout").checkable = true
-        plasmoid.action("setStairLayout").checked = Qt.binding(function() { return (root.currentLayout === 5) })
+        plasmoid.action("setStairLayout").priority = 0;
+        plasmoid.action("setStairLayout").checkable = true;
+        plasmoid.action("setStairLayout").checked = Qt.binding(() => (root.currentLayout === 5));
 
         plasmoid.setAction("setQuarterLayout", layoutModel.get(6).name, layoutModel.get(6).icon)
         plasmoid.setActionGroup("setQuarterLayout", "layoutGroup")
-        plasmoid.action("setQuarterLayout").checkable = true
-        plasmoid.action("setQuarterLayout").checked = Qt.binding(function() { return (root.currentLayout === 6) })
+        plasmoid.action("setQuarterLayout").priority = 0;
+        plasmoid.action("setQuarterLayout").checkable = true;
+        plasmoid.action("setQuarterLayout").checked = Qt.binding(() => (root.currentLayout === 6));
 
         plasmoid.setAction("setFloatingLayout", layoutModel.get(7).name, layoutModel.get(7).icon)
         plasmoid.setActionGroup("setFloatingLayout", "layoutGroup")
-        plasmoid.action("setFloatingLayout").checkable = true
-        plasmoid.action("setFloatingLayout").checked = Qt.binding(function() { return (root.currentLayout === 7) })
+        plasmoid.action("setFloatingLayout").priority = 0;
+        plasmoid.action("setFloatingLayout").checkable = true;
+        plasmoid.action("setFloatingLayout").checked = Qt.binding(() => (root.currentLayout === 7));
 
         plasmoid.setActionSeparator("layoutSeparator")
 
