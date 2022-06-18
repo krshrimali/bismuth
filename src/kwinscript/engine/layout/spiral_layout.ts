@@ -12,6 +12,13 @@ import { WindowState, EngineWindow } from "../window";
 import { Rect, RectDelta } from "../../util/rect";
 import { Config } from "../../config";
 import { Controller } from "../../controller";
+import { Engine } from "..";
+
+import {
+  Action,
+  Rotate,
+  RotateReverse,
+} from "../../controller/action";
 
 export type SpiralLayoutPart = HalfSplitLayoutPart<
   FillLayoutPart,
@@ -106,5 +113,19 @@ export default class SpiralLayout implements WindowsLayout {
       i++;
     }
     this.depth = depth;
+  }
+
+  private rotate(angle: 90 | 180 | -90 | -180): void {
+    this.parts.angle = (this.parts.angle + angle) % 360 as 0 | 90 | 180 | 270;
+  }
+
+  public executeAction(engine: Engine, action: Action): void {
+    if (action instanceof Rotate) {
+      this.rotate(90);
+    } else if (action instanceof RotateReverse) {
+      this.rotate(-90);
+    } else {
+      action.executeWithoutLayoutOverride();
+    }
   }
 }
