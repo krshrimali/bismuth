@@ -23,9 +23,9 @@ import { TSProxy } from "../extern/proxy";
  */
 export interface Driver {
   /**
-   * All the surfaces/screens currently possess by the KWin
+   * All surfaces/screens possessed by KWin for the given activity and desktop
    */
-  readonly screens: DriverSurface[];
+  screens(activity: string, desktop: number): DriverSurface[];
 
   /**
    * The currently active surface
@@ -116,14 +116,14 @@ export class DriverImpl implements Driver {
     }
   }
 
-  public get screens(): DriverSurface[] {
+  public screens(activity: string, desktop: number): DriverSurface[] {
     const screensArr = [];
     for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
       screensArr.push(
         new DriverSurfaceImpl(
           screen,
-          this.proxy.workspace().currentActivity,
-          this.proxy.workspace().currentDesktop,
+          activity,
+          desktop,
           this.qml.activityInfo,
           this.config,
           this.proxy
@@ -389,6 +389,12 @@ export class DriverImpl implements Driver {
     });
 
     this.connect(client.screenChanged, () => {
+      for (const surf of this.controller.screens()) {
+        if ((surf as DriverSurfaceImpl).screen == client.screen) {
+          window.surface = surf;
+          break;
+        }
+      }
       this.controller.onWindowScreenChanged(window);
     });
 

@@ -316,9 +316,11 @@ export class EngineImpl implements Engine {
   public arrange(): void {
     this.log.log("arrange");
 
-    this.controller.screens.forEach((driverSurface: DriverSurface) => {
-      this.arrangeScreen(driverSurface);
-    });
+    this.controller
+      .screens(this.controller.currentActivity, this.controller.currentDesktop)
+      .forEach((driverSurface: DriverSurface) => {
+        this.arrangeScreen(driverSurface);
+      });
   }
 
   /**
