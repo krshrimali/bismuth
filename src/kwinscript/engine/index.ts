@@ -461,7 +461,7 @@ export class EngineImpl implements Engine {
       return;
     }
 
-    const neighbor = this.getNeighborByDirection(window, dir);
+    const neighbor = this.getNeighborByDirection(window.geometry, dir);
     if (neighbor) {
       this.controller.currentWindow = neighbor;
     }
@@ -497,7 +497,7 @@ export class EngineImpl implements Engine {
       return;
     }
 
-    const neighbor = this.getNeighborByDirection(window, dir);
+    const neighbor = this.getNeighborByDirection(window.geometry, dir);
     if (neighbor) {
       this.windows.swap(window, neighbor);
     }
@@ -617,57 +617,60 @@ export class EngineImpl implements Engine {
     );
   }
 
+  /**
+   * Find windows in a given direction from a basis which have at least
+   * partial overlap in the perpendicular axis with the basis
+   * @param basis origin geometry from which to search
+   * @param dir search in this direction from basis
+   * @param surface if specified, restrict search to this surface
+   * @returns a list of windows on surface located dir from basis
+   */
   private getNeighborCandidates(
-    basis: EngineWindow,
-    dir: Direction
+    basis: Rect,
+    dir: Direction,
+    surface?: DriverSurface
   ): EngineWindow[] {
-    const visibleWindowsOnCurrentSurface = this.windows.visibleTiledWindowsOn(
-      this.controller.currentSurface
-    );
+    const visibleWindowsOnCurrentSurface = surface
+      ? this.windows.visibleTiledWindowsOn(surface)
+      : this.windows.visibleTiledWindows(
+          this.controller.currentActivity,
+          this.controller.currentDesktop
+        );
 
-    // Flipping all inputs' signs allows for the same logic to find closest windows in either direction
+    /* Flipping all inputs' signs allows for the same logic to find closest
+     windows in either direction */
     const sign = dir === "down" || dir === "right" ? 1 : -1;
 
     if (dir === "up" || dir === "down") {
       return visibleWindowsOnCurrentSurface.filter(
         (window): boolean =>
-          window.geometry.y * sign > basis.geometry.y * sign &&
-          overlap(
-            basis.geometry.x,
-            basis.geometry.maxX,
-            window.geometry.x,
-            window.geometry.maxX
-          )
+          window.geometry.y * sign > basis.y * sign &&
+          overlap(basis.x, basis.maxX, window.geometry.x, window.geometry.maxX)
       );
     } else {
       return visibleWindowsOnCurrentSurface.filter(
         (window): boolean =>
-          window.geometry.x * sign > basis.geometry.x * sign &&
-          overlap(
-            basis.geometry.y,
-            basis.geometry.maxY,
-            window.geometry.y,
-            window.geometry.maxY
-          )
+          window.geometry.x * sign > basis.x * sign &&
+          overlap(basis.y, basis.maxY, window.geometry.y, window.geometry.maxY)
       );
     }
   }
 
   private getClosestRelativWindowCorner(
-    windowArray: EngineWindow[],
+    geometries: Rect[],
     dir: Direction
   ): number {
-    return windowArray.reduce(
-      (prevValue, window): number => {
+    return geometries.reduce(
+      (prevValue, geometry): number => {
         switch (dir) {
           case "up":
-            return Math.max(window.geometry.maxY, prevValue);
+            return Math.max(geometry.maxY, prevValue);
           case "down":
-            return Math.min(window.geometry.y, prevValue);
+            return Math.min(geometry.y, prevValue);
           case "left":
-            return Math.max(window.geometry.maxX, prevValue);
+            return Math.max(geometry.maxX, prevValue);
           case "right":
-            return Math.min(window.geometry.x, prevValue);
+            return Math.min(geometry.x, prevValue);
         }
       },
       dir === "up" || dir === "left" ? 0 : Infinity
@@ -695,17 +698,20 @@ export class EngineImpl implements Engine {
   }
 
   private getNeighborByDirection(
-    basis: EngineWindow,
-    dir: Direction
+    basis: Rect,
+    dir: Direction,
+    surface?: DriverSurface
   ): EngineWindow | null {
-    const neighborCandidates = this.getNeighborCandidates(basis, dir);
+    const neighborCandidates = surface
+      ? this.getNeighborCandidates(basis, dir, surface)
+      : this.getNeighborCandidates(basis, dir);
 
     if (neighborCandidates.length === 0) {
       return null;
     }
 
     const closestWindowCorner = this.getClosestRelativWindowCorner(
-      neighborCandidates,
+      neighborCandidates.map((window) => window.geometry),
       dir
     );
 

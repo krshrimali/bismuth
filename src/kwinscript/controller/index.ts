@@ -35,6 +35,16 @@ export interface Controller {
   currentWindow: EngineWindow | null;
 
   /**
+   * Currently active activity
+   */
+  currentActivity: string;
+
+  /**
+   * Currently active desktop
+   */
+  currentDesktop: number;
+
+  /**
    * Current screen. In other words the screen, that has focus.
    */
   currentSurface: DriverSurface;
@@ -188,6 +198,14 @@ export class ControllerImpl implements Controller {
 
   public get screens(): DriverSurface[] {
     return this.driver.screens;
+  }
+
+  public get currentActivity(): string {
+    return this.driver.currentActivity;
+  }
+
+  public get currentDesktop(): number {
+    return this.driver.currentDesktop;
   }
 
   public get currentWindow(): EngineWindow | null {

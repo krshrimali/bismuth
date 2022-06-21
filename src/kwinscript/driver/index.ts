@@ -28,9 +28,19 @@ export interface Driver {
   readonly screens: DriverSurface[];
 
   /**
-   * Surface (screen) of the current window
+   * The currently active surface
    */
   currentSurface: DriverSurface;
+
+  /**
+   * The currently active activity
+   */
+  readonly currentActivity: string;
+
+  /**
+   * The currently active desktop
+   */
+  readonly currentDesktop: number;
 
   /**
    * Currently active (i.e. focused) window
@@ -83,6 +93,14 @@ export class DriverImpl implements Driver {
     if (this.proxy.workspace().currentDesktop !== kwinSurface.desktop) {
       this.proxy.workspace().currentDesktop = kwinSurface.desktop;
     }
+  }
+
+  public get currentActivity(): string {
+    return this.kwinApi.workspace.currentActivity;
+  }
+
+  public get currentDesktop(): number {
+    return this.kwinApi.workspace.currentDesktop;
   }
 
   public get currentWindow(): EngineWindow | null {
