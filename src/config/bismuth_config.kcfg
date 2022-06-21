@@ -183,6 +183,11 @@
       <default>false</default>
     </entry>
 
+    <entry name="mouseDragInsert" type="Bool">
+      <label>Dragging to move windows inserts instead of swapping</label>
+      <default>false</default>
+    </entry>
+
     <entry name="experimentalBackend" type="Bool">
       <label>Enable Experimental Backend</label>
       <default>false</default>

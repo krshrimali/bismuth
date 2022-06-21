@@ -318,7 +318,11 @@ export class ControllerImpl implements Controller {
       );
 
       if (targets.length === 1) {
-        this.engine.windows.swap(window, targets[0]);
+        if (this.config.mouseDragInsert) {
+          this.engine.windows.move(window, targets[0]);
+        } else {
+          this.engine.windows.swap(window, targets[0]);
+        }
         this.engine.arrange();
         return;
       }

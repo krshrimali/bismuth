@@ -31,6 +31,7 @@ export interface Config {
   //#region Behavior
   newWindowAsMaster: boolean;
   moveBetweenSurfaces: boolean;
+  mouseDragInsert: boolean;
   //#endregion
 
   //#region KWin-specific

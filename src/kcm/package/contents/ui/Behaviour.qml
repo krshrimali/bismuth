@@ -104,6 +104,35 @@ Kirigami.FormLayout {
 
     }
 
+    QQC2.ButtonGroup {
+        id: mouseDragBehaviorGroup
+    }
+
+    QQC2.RadioButton {
+        Kirigami.FormData.label: i18n("Windows moved by mouse:")
+        text: i18n("Swap with target window")
+        QQC2.ButtonGroup.group: mouseDragBehaviorGroup
+        checked: !kcm.config.mouseDragInsert
+        onClicked: kcm.config.mouseDragInsert = !checked
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "mouseDragInsert"
+        }
+    }
+
+    QQC2.RadioButton {
+        text: i18n("Insert at target window")
+        QQC2.ButtonGroup.group: mouseDragBehaviorGroup
+        checked: kcm.config.mouseDragInsert
+        onClicked: kcm.config.mouseDragInsert = checked
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "mouseDragInsert"
+        }
+    }
+
     QQC2.Button {
         id: windowRules
 
