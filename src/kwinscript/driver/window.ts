@@ -137,6 +137,7 @@ export class DriverWindowImpl implements DriverWindow {
     return (
       this.client.modal ||
       !this.client.resizeable ||
+      this.config.newWindowSpawnLocation === "floating" ||
       (this.config.floatUtility &&
         (this.client.dialog ||
           this.client.splash ||

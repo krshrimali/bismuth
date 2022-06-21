@@ -424,9 +424,22 @@ export class EngineImpl implements Engine {
     if (!window.shouldIgnore) {
       /* engine#arrange will update the state when required. */
       window.state = WindowState.Undecided;
-      if (this.config.newWindowAsMaster) {
+      if (this.config.newWindowSpawnLocation == "master") {
         this.windows.unshift(window);
+      } else if (
+        this.controller.currentWindow &&
+        this.config.newWindowSpawnLocation == "beforeFocused"
+      ) {
+        this.windows.push(window);
+        this.windows.move(window, this.controller.currentWindow);
+      } else if (
+        this.controller.currentWindow &&
+        this.config.newWindowSpawnLocation == "afterFocused"
+      ) {
+        this.windows.push(window);
+        this.windows.move(window, this.controller.currentWindow, true);
       } else {
+        /* newWindowSpawnLocation == "end" or "floating" */
         this.windows.push(window);
       }
     }
