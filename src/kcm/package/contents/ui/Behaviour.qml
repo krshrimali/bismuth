@@ -68,6 +68,11 @@ Kirigami.FormLayout {
         settingName: "keepFloatAbove"
     }
 
+    BIC.ConfigCheckBox {
+        text: i18n("Allow movement across screen boundries")
+        settingName: "moveBetweenSurfaces"
+    }
+
     QQC2.ButtonGroup {
         id: windowSpawnPositionGroup
     }

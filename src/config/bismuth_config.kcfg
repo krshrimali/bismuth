@@ -108,6 +108,11 @@
       <default>true</default>
     </entry>
 
+    <entry name="moveBetweenSurfaces" type="Bool">
+      <label>Allow movement across screen boundries.</label>
+      <default>true</default>
+    </entry>
+
     <entry name="monocleMaximize" type="Bool">
       <label>Always maximize windows in Monocle layout</label>
       <default>true</default>
