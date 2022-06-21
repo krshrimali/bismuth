@@ -430,6 +430,8 @@ export class EngineImpl implements Engine {
         this.windows.push(window);
       }
     }
+    this.arrangeScreen(window.surface);
+    this.commitArrangement(window.surface);
   }
 
   public unmanage(window: EngineWindow): void {

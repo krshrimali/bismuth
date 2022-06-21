@@ -274,8 +274,6 @@ export class ControllerImpl implements Controller {
         }
       }
     }
-
-    this.engine.arrange();
   }
 
   public onWindowRemoved(window: EngineWindow): void {
