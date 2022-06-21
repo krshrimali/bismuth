@@ -320,12 +320,20 @@ export class EngineImpl implements Engine {
   }
 
   public arrange(): void {
-    this.log.log("arrange");
+    /* Try to avoid calling this; use arrangeScreen and commitArrangement on
+    specific surfaces instead */
+    this.log.log("someone called global arrange");
+
+    if (!this.controller.currentActivity || !this.controller.currentDesktop) {
+      return;
+    }
 
     this.controller
       .screens(this.controller.currentActivity, this.controller.currentDesktop)
-      .forEach((driverSurface: DriverSurface) => {
-        this.arrangeScreen(driverSurface);
+      .forEach((surf: DriverSurface) => {
+        this.log.log(`arranging surface: ${surf.id}`);
+        this.arrangeScreen(surf);
+        this.commitArrangement(surf);
       });
   }
 
@@ -334,7 +342,7 @@ export class EngineImpl implements Engine {
    *
    * @param screenSurface screen's surface, on which windows should be arranged
    */
-  public arrangeScreen(screenSurface: DriverSurface): void {
+  private arrangeScreen(screenSurface: DriverSurface): void {
     const layout = this.layouts.getCurrentLayout(screenSurface);
 
     const workingArea = screenSurface.workingArea;
@@ -381,9 +389,21 @@ export class EngineImpl implements Engine {
         });
     }
 
-    // Commit window assigned properties
-    visibleWindows.forEach((win: EngineWindow) => win.commit());
     this.log.log(["arrangeScreen/finished", { screenSurface }]);
+  }
+
+  /**
+   * Push the arrangement to kwin to commit any changes
+   * @param surface Windows on this surface will be committed
+   */
+  private commitArrangement(surface: DriverSurface): void {
+    // Commit window assigned properties
+    const visibleWindows = this.windows.visibleWindowsOn(surface);
+
+    visibleWindows.forEach((win: EngineWindow) => {
+      this.log.log(`committing: ${win}`);
+      visibleWindows.forEach((win: EngineWindow) => win.commit());
+    });
   }
 
   public currentLayoutOnCurrentSurface(): WindowsLayout {
