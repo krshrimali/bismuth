@@ -248,6 +248,77 @@ export class MoveActiveWindowRight extends ActionImpl implements Action {
   }
 }
 
+export class MoveActiveWindowToSurfaceUp extends ActionImpl implements Action {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "move_window_to_upper_surf",
+      "Move Window Up Surface",
+      "Meta+Alt+K",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    this.engine.moveToSurfaceDir("up");
+  }
+}
+
+export class MoveActiveWindowToSurfaceDown
+  extends ActionImpl
+  implements Action
+{
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "move_window_to_bottom_surf",
+      "Move Window Down Surface",
+      "Meta+Alt+J",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    this.engine.moveToSurfaceDir("down");
+  }
+}
+export class MoveActiveWindowToSurfaceLeft
+  extends ActionImpl
+  implements Action
+{
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "move_window_to_left_surf",
+      "Move Window Left Surface",
+      "Meta+Alt+H",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    this.engine.moveToSurfaceDir("left");
+  }
+}
+export class MoveActiveWindowToSurfaceRight
+  extends ActionImpl
+  implements Action
+{
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "move_window_to_right_surf",
+      "Move Window Right Surface",
+      "Meta+Alt+L",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    this.engine.moveToSurfaceDir("right");
+  }
+}
+
 export class IncreaseActiveWindowWidth extends ActionImpl implements Action {
   constructor(protected engine: Engine, protected log: Log) {
     super(

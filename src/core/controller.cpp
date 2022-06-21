@@ -119,6 +119,19 @@ void Controller::registerShortcuts()
         qDebug(Bi) << "Move Window Right Triggered!";
     });
 
+    addShortcut("move_window_to_upper_surf", "Move Window Up Surface", "Meta+Alt+K", [=]() {
+        qDebug(Bi) << "Move Window Up Surface Triggered!";
+    });
+    addShortcut("move_window_to_bottom_surf", "Move Window Down Surface", "Meta+Alt+J", [=]() {
+        qDebug(Bi) << "Move Window Down Surface Triggered!";
+    });
+    addShortcut("move_window_to_left_surf", "Move Window Left Surface", "Meta+Alt+H", [=]() {
+        qDebug(Bi) << "Move Window Left Surface Triggered!";
+    });
+    addShortcut("move_window_to_right_surf", "Move Window Right Surface", "Meta+Alt+L", [=]() {
+        qDebug(Bi) << "Move Window Right Surface Triggered!";
+    });
+
     addShortcut("increase_window_width", "Increase Window Width", "Meta+Ctrl+L", [=]() {
         qDebug(Bi) << "Increase Window Width Triggered!";
     });

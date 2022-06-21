@@ -168,6 +168,13 @@ export interface Controller {
    * In particular, it's called by QML Component.onDestroyed
    */
   drop(): void;
+
+  /**
+   * Move a window to a different surface
+   * @param window the window to be moved to @param surface
+   * @param surface the surface to move @param window to
+   */
+  moveWindowToSurface(window: EngineWindow, surface: DriverSurface): void;
 }
 
 export class ControllerImpl implements Controller {
@@ -421,6 +428,14 @@ export class ControllerImpl implements Controller {
     this.engine.manage(win);
   }
 
+  public moveWindowToSurface(
+    window: EngineWindow,
+    surface: DriverSurface
+  ): void {
+    this.driver.moveWindowToSurface(window, surface);
+    this.engine.arrange();
+  }
+
   public drop(): void {
     this.driver.drop();
   }
@@ -440,6 +455,11 @@ export class ControllerImpl implements Controller {
       new Action.MoveActiveWindowDown(this.engine, this.log),
       new Action.MoveActiveWindowLeft(this.engine, this.log),
       new Action.MoveActiveWindowRight(this.engine, this.log),
+
+      new Action.MoveActiveWindowToSurfaceUp(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceDown(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceLeft(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceRight(this.engine, this.log),
 
       new Action.IncreaseActiveWindowWidth(this.engine, this.log),
       new Action.IncreaseActiveWindowHeight(this.engine, this.log),
