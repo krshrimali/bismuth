@@ -294,18 +294,12 @@ export class ControllerImpl implements Controller {
     this.engine.arrange();
   }
 
-  public onWindowMoveStart(_window: EngineWindow): void {
-    /* do nothing */
+  public onWindowMoveStart(window: EngineWindow): void {
+    this.log.log(["onWindowMoveStart", { window }]);
   }
 
-  public onWindowMove(_window: EngineWindow): void {
-    /* do nothing */
-  }
-
-  public onWindowMoveOver(window: EngineWindow): void {
-    this.log.log(["onWindowMoveOver", { window }]);
-
-    /* swap window by dragging */
+  public onWindowMove(window: EngineWindow): void {
+    /* update the window position in the layout */
     if (window.state === WindowState.Tiled) {
       const tiles = this.engine.windows.visibleTiledWindowsOn(
         this.currentSurface
@@ -327,8 +321,12 @@ export class ControllerImpl implements Controller {
         return;
       }
     }
+  }
 
-    /* ... or float window */
+  public onWindowMoveOver(window: EngineWindow): void {
+    this.log.log(["onWindowMoveOver", { window }]);
+
+    /* float window if it was dropped far from a tile */
     if (this.config.untileByDragging) {
       if (window.state === WindowState.Tiled) {
         const diff = window.actualGeometry.subtract(window.geometry);
@@ -344,7 +342,7 @@ export class ControllerImpl implements Controller {
       }
     }
 
-    /* ... or return to the previous position */
+    /* move the window to its current position in the layout */
     window.commit();
   }
 
