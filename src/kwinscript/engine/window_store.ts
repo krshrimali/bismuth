@@ -22,6 +22,11 @@ export interface WindowStore {
   visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[];
 
   /**
+   * Return all visible "Tile" windows on the given activity and desktop.
+   */
+  visibleTiledWindows(activity: string, desktop: number): EngineWindow[];
+
+  /**
    * Return all visible "tileable" windows on the given surface
    * @see Window#tileable
    */
@@ -146,6 +151,10 @@ export class WindowStoreImpl implements WindowStore {
 
   public visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[] {
     return this.list.filter((win) => win.tiled && win.visibleOn(surf));
+  }
+
+  public visibleTiledWindows(act: string, desk: number): EngineWindow[] {
+    return this.list.filter((win) => win.tiled && win.visible(act, desk));
   }
 
   public visibleTileableWindowsOn(surf: DriverSurface): EngineWindow[] {

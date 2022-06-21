@@ -88,6 +88,13 @@ export interface DriverWindow {
    * @param surf the surface to check against
    */
   visibleOn(surf: DriverSurface): boolean;
+
+  /**
+   * Whether the window is visible on the given activity and desktop
+   * @param activity the activity to check
+   * @param desktop the desktop to check
+   */
+  visible(activity: string, desktop: number): boolean;
 }
 
 export class DriverWindowImpl implements DriverWindow {
@@ -298,15 +305,22 @@ export class DriverWindowImpl implements DriverWindow {
     })`;
   }
 
-  public visibleOn(surf: DriverSurface): boolean {
-    const surfImpl = surf as DriverSurfaceImpl;
+  public visible(activity: string, desktop: number): boolean {
     return (
       !this.client.minimized &&
-      (this.client.desktop === surfImpl.desktop ||
+      (this.client.desktop === desktop ||
         this.client.desktop === -1) /* on all desktop */ &&
       (this.client.activities.length === 0 /* on all activities */ ||
-        this.client.activities.indexOf(surfImpl.activity) !== -1) &&
-      this.client.screen === surfImpl.screen
+        this.client.activities.indexOf(activity) !== -1)
+    );
+  }
+
+  public visibleOn(surf: DriverSurface): boolean {
+    const surfImpl = surf as DriverSurfaceImpl;
+    const win = this as DriverWindow;
+    return (
+      this.visible(surfImpl.activity, surfImpl.desktop) &&
+      win.surface.id == surf.id
     );
   }
 

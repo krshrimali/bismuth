@@ -146,6 +146,13 @@ export interface EngineWindow {
   visibleOn(surface: DriverSurface): boolean;
 
   /**
+   * Whether the window is visible on a given activity and desktop
+   * @param activity the activity to check
+   * @param desktop the desktop to check
+   */
+  visible(activity: string, desktop: number): boolean;
+
+  /**
    * Force apply the geometry *immediately*.
    *
    * This method is a quick hack created for engine#resizeFloat, thus should
@@ -378,6 +385,10 @@ export class EngineWindowImpl implements EngineWindow {
 
   public forceSetGeometry(geometry: Rect): void {
     this.window.commit(geometry);
+  }
+
+  public visible(act: string, desk: number): boolean {
+    return this.window.visible(act, desk);
   }
 
   public visibleOn(srf: DriverSurface): boolean {
