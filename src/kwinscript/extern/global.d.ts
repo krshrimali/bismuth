@@ -10,7 +10,11 @@ declare namespace Bismuth {
     export interface Main {
       scriptRoot: object;
       activityInfo: Plasma.TaskManager.ActivityInfo;
-      popupDialog: PopupDialog;
+      popupDialog0: PopupDialog;
+      popupDialog1: PopupDialog;
+      popupDialog2: PopupDialog;
+      popupDialog3: PopupDialog;
+      popupDialog4: PopupDialog;
     }
 
     export interface PopupDialog {

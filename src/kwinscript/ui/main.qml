@@ -20,7 +20,11 @@ Item {
         const qmlObjects = {
             "scriptRoot": scriptRoot,
             "activityInfo": activityInfo,
-            "popupDialog": popupDialog
+            "popupDialog0": popupDialog0,
+            "popupDialog1": popupDialog1,
+            "popupDialog2": popupDialog2,
+            "popupDialog3": popupDialog3,
+            "popupDialog4": popupDialog4,
         };
         const kwinScriptingAPI = {
             "workspace": workspace,
@@ -47,10 +51,46 @@ Item {
     }
 
     Loader {
-        id: popupDialog
+        id: popupDialog0
 
-        function show(text, icon, hint) {
-            this.item.show(text, icon, hint);
+        function show(text, icon, hint, screen) {
+            this.item.show(text, icon, hint, screen);
+        }
+
+        source: "popup.qml"
+    }
+    Loader {
+        id: popupDialog1
+
+        function show(text, icon, hint, screen) {
+            this.item.show(text, icon, hint, screen);
+        }
+
+        source: "popup.qml"
+    }
+    Loader {
+        id: popupDialog2
+
+        function show(text, icon, hint, screen) {
+            this.item.show(text, icon, hint, screen);
+        }
+
+        source: "popup.qml"
+    }
+    Loader {
+        id: popupDialog3
+
+        function show(text, icon, hint, screen) {
+            this.item.show(text, icon, hint, screen);
+        }
+
+        source: "popup.qml"
+    }
+    Loader {
+        id: popupDialog4
+
+        function show(text, icon, hint, screen) {
+            this.item.show(text, icon, hint, screen);
         }
 
         source: "popup.qml"

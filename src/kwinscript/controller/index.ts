@@ -268,6 +268,17 @@ export class ControllerImpl implements Controller {
     hint?: string,
     screen?: number
   ): void {
+    if (screen === -1) {
+      // all screens
+      for (const surf of this.screens()) {
+        this.driver.showNotification(text, icon, hint, surf.screen);
+      }
+      return;
+    } else if (screen === undefined) {
+      // current screen
+      screen = this.currentSurface.screen;
+    }
+    // specified screen
     this.driver.showNotification(text, icon, hint, screen);
   }
 
@@ -291,7 +302,12 @@ export class ControllerImpl implements Controller {
 
     if (this.currentDesktop == this.proxy.workspace().desktops) {
       this.log.log(`tried to access hidden desktop ${this.currentDesktop}`);
-      this.showNotification(`Desktop ${this.currentDesktop} forbidden`);
+      this.showNotification(
+        `Desktop ${this.currentDesktop} is forbidden`,
+        undefined,
+        undefined,
+        -1
+      );
       this.proxy.workspace().currentDesktop--;
       return;
     }

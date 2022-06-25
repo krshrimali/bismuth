@@ -493,7 +493,23 @@ export class DriverImpl implements Driver {
     hint?: string,
     screen?: number
   ): void {
-    this.qml.popupDialog.show(text, icon, hint, screen);
+    switch (screen) {
+      case 0:
+        this.qml.popupDialog0.show(text, icon, hint, screen);
+        break;
+      case 1:
+        this.qml.popupDialog1.show(text, icon, hint, screen);
+        break;
+      case 2:
+        this.qml.popupDialog2.show(text, icon, hint, screen);
+        break;
+      case 3:
+        this.qml.popupDialog3.show(text, icon, hint, screen);
+        break;
+      case 4:
+        this.qml.popupDialog4.show(text, icon, hint, screen);
+        break;
+    }
   }
 
   public onCurrentDesktopChanged(): void {
