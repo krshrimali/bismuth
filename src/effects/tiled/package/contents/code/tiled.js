@@ -25,7 +25,7 @@ class TiledEffect {
   loadConfig() {
     this.duration = 100;
     this.distanceDuration = 0.15;
-    this.curve = QEasingCurve.OutCubic;
+    this.curve = QEasingCurve.InCubic;
   }
 
   onWindowMaximizedStateChanged(window) {

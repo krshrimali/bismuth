@@ -61,6 +61,7 @@ export interface Controller {
    * React to screen focus change
    */
   onCurrentSurfaceChanged(): void;
+  onAllSurfacesChanged(): void;
 
   /**
    * React to screen update. For example, when the new screen has connected.
@@ -263,6 +264,11 @@ export class ControllerImpl implements Controller {
   public onCurrentSurfaceChanged(): void {
     this.log.log(["onCurrentSurfaceChanged", { srf: this.currentSurface }]);
     this.engine.arrange(this.currentSurface);
+  }
+
+  public onAllSurfacesChanged(): void {
+    this.log.log(["onAllSurfacesChanged", { srf: this.currentSurface }]);
+    this.engine.arrange();
   }
 
   public onWindowAdded(window: EngineWindow): void {

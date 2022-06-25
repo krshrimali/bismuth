@@ -261,11 +261,20 @@ export class DriverImpl implements Driver {
       this.log.log(`Client added to screen ${client.screen}: ${client}`);
 
       let group = this.groupMapSurface[client.screen];
+
       if (this.groupMap[client.windowId]) {
         group = this.groupMap[client.windowId];
+        this.log.log(
+          `new client already had group ${group} 0x${client.windowId.toString(
+            16
+          )}`
+        );
+        this.groupMap[client.windowId] = group;
       } else {
         this.log.log(
-          `initially setting client ${client.windowId} to group ${group}`
+          `initially setting client 0x${client.windowId.toString(
+            16
+          )} to group ${group}`
         );
         this.groupMap[client.windowId] = group;
       }
@@ -289,6 +298,7 @@ export class DriverImpl implements Driver {
       if (window) {
         this.controller.onWindowRemoved(window);
         this.windowMap.remove(client);
+        delete this.groupMap[client.windowId];
       }
     };
 
@@ -324,11 +334,11 @@ export class DriverImpl implements Driver {
       );
 
     this.connect(this.kwinApi.workspace.currentActivityChanged, () =>
-      this.controller.onCurrentSurfaceChanged()
+      this.controller.onAllSurfacesChanged()
     );
 
     this.connect(this.kwinApi.workspace.currentDesktopChanged, () =>
-      this.controller.onCurrentSurfaceChanged()
+      this.controller.onAllSurfacesChanged()
     );
 
     this.connect(this.kwinApi.workspace.clientAdded, onClientAdded);
@@ -410,14 +420,14 @@ export class DriverImpl implements Driver {
         // this.controller.moveWindowToSurface(window, surf);
 
         window.window.hidden = false;
-        return oldSurf;
+        return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
       }
     }
 
     window.window.group = groupId;
     window.window.hidden = true;
 
-    return oldSurf;
+    return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
 
     // this.moveWindowToSurface(window, this.controller.screens()[groupId]);
 

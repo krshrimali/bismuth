@@ -985,7 +985,7 @@ export class EngineImpl implements Engine {
       this.arrange(oldSurf);
     }
 
-    if (window.window.surface) {
+    if (!window.window.hidden) {
       this.arrange(window.window.surface);
     }
   }
@@ -1004,10 +1004,10 @@ export class EngineImpl implements Engine {
 
     this.controller.swapGroupToSurface(groupId, screen);
 
-    this.log.log(
-      `do arrange for screen ${this.controller.currentSurface.screen}`
-    );
-    this.arrange(this.controller.currentSurface);
+    this.log.log(`do arrange for screen ${this.controller.screens()[screen]}`);
+
+    this.arrange(this.controller.screens()[screen]);
+
     if (oldSurf) {
       oldSurf = this.controller.screens()[oldSurf.screen];
       this.log.log(
@@ -1018,7 +1018,12 @@ export class EngineImpl implements Engine {
   }
 
   public swapGroupToActiveSurface(groupId: number): void {
-    this.swapGroupToSurface(groupId, this.controller.currentSurface.screen);
+    const activeScreen = this.controller.currentSurface.screen;
+    this.swapGroupToSurface(groupId, activeScreen);
+    // set focus to first window in the new group
+    this.controller.currentWindow = this.windows.visibleTiledWindowsOn(
+      this.controller.screens()[activeScreen]
+    )[0];
   }
 
   public moveWindowToSurface(
