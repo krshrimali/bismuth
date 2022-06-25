@@ -3,6 +3,7 @@
 
 add_subdirectory(config)
 add_subdirectory(core)
+add_subdirectory(effects)
 add_subdirectory(kcm)
 add_subdirectory(kdecoration)
 add_subdirectory(kwinscript)
