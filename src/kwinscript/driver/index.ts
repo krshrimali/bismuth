@@ -62,6 +62,8 @@ export interface Driver {
 
   onCurrentDesktopChanged(): void;
 
+  onNumberDesktopsChanged(oldNumDesktops: number): void;
+
   /**
    * Bind script to the various KWin events
    */
@@ -213,12 +215,14 @@ export class DriverImpl implements Driver {
     }
     const numDesktops = this.proxy.workspace().desktops;
 
+    const customScreenOrder = [1, 3, 2, 0, 4, 5, 6, 7, 8, 9];
+
     const numScreens = this.proxy.workspace().numScreens;
     let groupId = 1;
     for (let desktop = 1; desktop <= numDesktops; desktop++) {
       this.groupMapSurface[desktop] = {};
       for (let screen = 0; screen < numScreens; screen++) {
-        this.groupMapSurface[desktop][screen] = groupId++;
+        this.groupMapSurface[desktop][customScreenOrder[screen]] = groupId++;
       }
 
       // // custom group mapping for misordered screens
@@ -358,6 +362,10 @@ export class DriverImpl implements Driver {
 
     this.connect(this.kwinApi.workspace.currentDesktopChanged, () =>
       this.controller.onCurrentDesktopChanged()
+    );
+
+    this.connect(this.kwinApi.workspace.numberDesktopsChanged, (num: number) =>
+      this.onNumberDesktopsChanged(num)
     );
 
     this.connect(this.kwinApi.workspace.clientAdded, onClientAdded);
@@ -520,6 +528,18 @@ export class DriverImpl implements Driver {
     //     surf.screen
     //   );
     // }
+  }
+
+  public onNumberDesktopsChanged(oldNumDesktops: number): void {
+    this.log.log(
+      `onNumberDesktopsChanged from ${oldNumDesktops} to ${
+        this.proxy.workspace().desktops
+      }`
+    );
+    if (this.proxy.workspace().desktops < 2) {
+      this.log.log("Too few desktops! Adding one desktop.");
+      this.proxy.workspace().desktops++;
+    }
   }
 
   public drop(): void {
