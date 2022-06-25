@@ -76,6 +76,7 @@ export interface Driver {
     groupId: number,
     window?: EngineWindow
   ): DriverSurface | null;
+
   swapGroupToSurface(groupId: number, screen: number): void;
 
   /**
@@ -207,7 +208,11 @@ export class DriverImpl implements Driver {
     this.groupMap = {};
     this.groupMapSurface = {};
 
+    if (this.proxy.workspace().desktops < 2) {
+      this.proxy.workspace().desktops++;
+    }
     const numDesktops = this.proxy.workspace().desktops;
+
     const numScreens = this.proxy.workspace().numScreens;
     let groupId = 1;
     for (let desktop = 1; desktop <= numDesktops; desktop++) {
@@ -630,7 +635,7 @@ export class DriverImpl implements Driver {
       }
       this.log.log(`kwin tried to move window to desktop ${client.desktop}`);
 
-      client.desktop = this.currentDesktop;
+      // client.desktop = this.currentDesktop;
       // this.controller.onWindowDesktopChanged(window);
     });
 

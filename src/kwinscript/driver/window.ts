@@ -260,7 +260,7 @@ export class DriverWindowImpl implements DriverWindow {
 
   public get hidden(): boolean {
     // return this.proxy.workspace().isWindowHidden(this.client);
-    return this.client.desktop == HIDDEN_DESKTOP;
+    return this.client.desktop == this.proxy.workspace().desktops;
   }
 
   public set hidden(isHidden: boolean) {
@@ -281,19 +281,15 @@ export class DriverWindowImpl implements DriverWindow {
 
     // this.proxy.workspace().setWindowHidden(this.client, isHidden);
     // this.client.desktop = isHidden ? HIDDEN_DESKTOP : SHOWN_DESKTOP;
-    const newDesktop = isHidden
-      ? HIDDEN_DESKTOP
-      : this.proxy.workspace().currentDesktop;
 
-    if (newDesktop > 3 || newDesktop == 0 || newDesktop < -1) {
-      this.log.log(`new desktop ${newDesktop}`);
+    if (isHidden) {
+      this.client.desktop = this.proxy.workspace().desktops;
+      // this._screen = null;
+    } else {
+      this.client.desktop = this.proxy.workspace().currentDesktop;
+      // this._screen
     }
 
-    if (this.client.desktop == -1) {
-      this.log.log(`desktop was all`);
-    }
-
-    this.client.desktop = newDesktop;
     // this.client.desktop = -1;
   }
 

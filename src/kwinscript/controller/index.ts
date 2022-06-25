@@ -179,6 +179,7 @@ export interface Controller {
     groupId: number,
     window?: EngineWindow | null
   ): DriverSurface | null;
+
   swapGroupToSurface(groupId: number, screen: number): void;
 
   /**
@@ -287,6 +288,14 @@ export class ControllerImpl implements Controller {
 
   public onCurrentDesktopChanged(): void {
     this.log.log("onCurrentDesktopChanged");
+
+    if (this.currentDesktop == this.proxy.workspace().desktops) {
+      this.log.log(`tried to access hidden desktop ${this.currentDesktop}`);
+      this.showNotification(`Desktop ${this.currentDesktop} forbidden`);
+      this.proxy.workspace().currentDesktop--;
+      return;
+    }
+
     for (const surf of this.screens()) {
       this.showNotification("Group", undefined, `${surf.group}`, surf.screen);
     }
@@ -542,7 +551,7 @@ export class ControllerImpl implements Controller {
 
   public swapGroupToSurface(groupId: number, screen: number): void {
     // hide windows currently on this surface
-    for (const win of this.engine.windows.visibleWindowsOn(
+    for (const win of this.engine.windows.allWindowsOn(
       this.screens()[screen]
     )) {
       win.window.hidden = true;
@@ -552,7 +561,7 @@ export class ControllerImpl implements Controller {
     this.driver.swapGroupToSurface(groupId, screen);
 
     // unhide windows now on this surface
-    for (const win of this.engine.windows.visibleWindowsOn(
+    for (const win of this.engine.windows.allWindowsOn(
       this.screens()[screen]
     )) {
       win.window.hidden = false;

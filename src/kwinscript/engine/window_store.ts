@@ -173,6 +173,6 @@ export class WindowStoreImpl implements WindowStore {
   }
 
   public allWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.surface?.id === surf.id);
+    return this.list.filter((win) => win.window.group === surf.group);
   }
 }
