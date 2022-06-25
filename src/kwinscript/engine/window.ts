@@ -101,7 +101,7 @@ export interface EngineWindow {
   /**
    * Screen number, on which the window is present
    */
-  readonly screen: number;
+  readonly screen: number | null;
 
   /**
    * Whether the window is minimized
@@ -121,7 +121,7 @@ export interface EngineWindow {
   /**
    * Surface, the window is currently on
    */
-  surface: DriverSurface;
+  surface: DriverSurface | null;
 
   // group: number;
 
@@ -200,7 +200,7 @@ export class EngineWindowImpl implements EngineWindow {
     return this.window.shouldIgnore;
   }
 
-  public get screen(): number {
+  public get screen(): number | null {
     return this.window.screen;
   }
 
@@ -286,19 +286,19 @@ export class EngineWindowImpl implements EngineWindow {
     return this.internalStatePreviouslyAskedToChangeTo;
   }
 
-  public get surface(): DriverSurface {
+  public get surface(): DriverSurface | null {
     return this.window.surface;
   }
 
-  public set surface(srf: DriverSurface) {
+  public set surface(srf: DriverSurface | null) {
     this.window.surface = srf;
-    this.window.group = srf.group;
+    this.window.group = srf ? srf.group : -1;
 
     // this._group = srf.currentGroup;
   }
 
   public get weight(): number {
-    const srfID = this.window.surface.id;
+    const srfID = this.window.group;
     const winWeight: number | undefined = this.weightMap[srfID];
     if (winWeight === undefined) {
       this.weightMap[srfID] = 1.0;
@@ -308,7 +308,7 @@ export class EngineWindowImpl implements EngineWindow {
   }
 
   public set weight(value: number) {
-    const srfID = this.window.surface.id;
+    const srfID = this.window.group;
     this.weightMap[srfID] = value;
   }
 
@@ -357,6 +357,10 @@ export class EngineWindowImpl implements EngineWindow {
   }
 
   public commit(): void {
+    if (!this.window.surface) {
+      return;
+    }
+
     const state = this.state;
     // this.log.log(["Window#commit", { state: WindowState[state] }]);
     switch (state) {

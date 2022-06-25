@@ -13,6 +13,12 @@ import { TSProxy } from "../extern/proxy";
 import { EngineWindow } from "../engine/window";
 
 /**
+ * Hijack kwin's desktop module to gain the ability to hide and show windows
+ */
+const SHOWN_DESKTOP = -1;
+const HIDDEN_DESKTOP = 3;
+
+/**
  * KWin window representation.
  */
 export interface DriverWindow {
@@ -49,7 +55,7 @@ export interface DriverWindow {
   /**
    * The screen number the window is currently at
    */
-  readonly screen: number;
+  readonly screen: number | null;
 
   /**
    * Whether the window is focused right now
@@ -64,7 +70,7 @@ export interface DriverWindow {
   /**
    * Window's current surface
    */
-  surface: DriverSurface;
+  surface: DriverSurface | null;
 
   group: number;
 
@@ -104,7 +110,7 @@ export interface DriverWindow {
 
 export class DriverWindowImpl implements DriverWindow {
   public readonly id: string;
-  private _screen: number;
+  private _screen: number | null;
 
   public get fullScreen(): boolean {
     return this.client.fullScreen;
@@ -154,7 +160,10 @@ export class DriverWindowImpl implements DriverWindow {
     );
   }
 
-  public get screen(): number {
+  public get screen(): number | null {
+    if (this._screen === null || this._screen < 0 || this._screen > 4) {
+      this.log.log(`got invalid screen ${this._screen}`);
+    }
     return this._screen;
   }
 
@@ -172,7 +181,7 @@ export class DriverWindowImpl implements DriverWindow {
 
   public maximized: boolean;
 
-  public get surface(): DriverSurface {
+  public get surface(): DriverSurface | null {
     let activity;
     if (this.client.activities.length === 0) {
       activity = this.proxy.workspace().currentActivity;
@@ -190,8 +199,15 @@ export class DriverWindowImpl implements DriverWindow {
         ? this.client.desktop
         : this.proxy.workspace().currentDesktop;
 
+    const group = this.group;
+
+    //TODO return null if our group isn't currently shown on any surface
+    if (this.screen === null) {
+      return null;
+    }
+
     return new DriverSurfaceImpl(
-      this._screen,
+      this.screen,
       activity,
       desktop,
       this.group,
@@ -202,8 +218,16 @@ export class DriverWindowImpl implements DriverWindow {
     );
   }
 
-  public set surface(surf: DriverSurface) {
+  public set surface(surf: DriverSurface | null) {
     // TODO: setting activity?
+
+    if (!surf) {
+      this.hidden = true;
+      this._screen = null;
+      return;
+    }
+
+    this.hidden = false;
 
     const surfImpl = surf as DriverSurfaceImpl;
 
@@ -213,11 +237,11 @@ export class DriverWindowImpl implements DriverWindow {
 
     this._screen = surfImpl.screen;
 
-    if (surf.screen < 5) {
-      this.hidden = false;
-    } else {
-      this.hidden = true;
-    }
+    // if (surf.screen < 5) {
+    //   this.hidden = false;
+    // } else {
+    //   this.hidden = true;
+    // }
   }
 
   private noBorderManaged: boolean;
@@ -235,32 +259,42 @@ export class DriverWindowImpl implements DriverWindow {
   }
 
   public get hidden(): boolean {
-    return this.proxy.workspace().isWindowHidden(this.client);
-    // return this.client.isHidden();
-    // return false;
+    // return this.proxy.workspace().isWindowHidden(this.client);
+    return this.client.desktop == HIDDEN_DESKTOP;
   }
 
   public set hidden(isHidden: boolean) {
-    if (this.hidden == isHidden) {
-      return;
+    // if (this.hidden == isHidden) {
+    //   return;
+    // }
+
+    // if (this.client.minimized) {
+    //   this.log.log(`not hiding minimized window ${this}`);
+    //   return;
+    // }
+
+    // this.log.log(
+    //   `set hidden ${isHidden} ${this} (desktop ${
+    //     this.proxy.workspace().currentDesktop
+    //   })`
+    // );
+
+    // this.proxy.workspace().setWindowHidden(this.client, isHidden);
+    // this.client.desktop = isHidden ? HIDDEN_DESKTOP : SHOWN_DESKTOP;
+    const newDesktop = isHidden
+      ? HIDDEN_DESKTOP
+      : this.proxy.workspace().currentDesktop;
+
+    if (newDesktop > 3 || newDesktop == 0 || newDesktop < -1) {
+      this.log.log(`new desktop ${newDesktop}`);
     }
 
-    if (this.client.minimized) {
-      this.log.log(`not hiding minimized window ${this}`);
-      return;
+    if (this.client.desktop == -1) {
+      this.log.log(`desktop was all`);
     }
 
-    this.log.log(`set hidden ${isHidden} ${this}`);
-
-    // this.log.log(`setHidden ${isHidden}`);
-    // this.client.setHidden(isHidden);
-    // this.log.log(`omg`);
-    // const wtf = this.proxy.workspace().setWindowHidden(this.client, isHidden);
-    // const wtf = this.proxy.workspace().setWindowHidden();
-    this.proxy.workspace().setWindowHidden(this.client, isHidden);
-    // this.proxy.workspace().slotWindowToDesktopDown();
-    // this.log.log(`wtf`);
-    // this.log.log(`wtf ${wtf}`);
+    this.client.desktop = newDesktop;
+    // this.client.desktop = -1;
   }
 
   /**
@@ -285,11 +319,17 @@ export class DriverWindowImpl implements DriverWindow {
     this.noBorderOriginal = client.noBorder;
     this._screen = client.screen;
 
-    if (this.screen < 5) {
+    if (!this.shouldIgnore) {
       this.hidden = false;
+      this.log.log("not ignoring");
     } else {
-      this.hidden = true;
     }
+
+    // if (this.screen < 5) {
+    //   this.hidden = false;
+    // } else {
+    //   this.hidden = true;
+    // }
   }
 
   public static generateID(client: KWin.Client): string {
@@ -311,11 +351,17 @@ export class DriverWindowImpl implements DriverWindow {
     //   `
     // );
 
-    if (this.surface.group != this.group) {
-      this.log.log(`is hidden ${this}`);
+    if (!this.surface) {
+      this.log.log(`tried to commit window with no surface ${this}`);
       this.hidden = true;
       return;
     }
+
+    // if (this.surface.group != this.group) {
+    //   this.log.log(`is hidden ${this}`);
+    //   this.hidden = true;
+    //   return;
+    // }
 
     this.hidden = false;
 
@@ -387,9 +433,9 @@ export class DriverWindowImpl implements DriverWindow {
     return (
       !this.client.minimized &&
       // !this.hidden &&
-      this.screen < 5 &&
-      (this.client.desktop === desktop ||
-        this.client.desktop === -1) /* on all desktop */ &&
+      // (this.client.desktop === desktop ||
+      //   this.client.desktop === -1 /* on all desktop */ ||
+      //   this.client.desktop === HIDDEN_DESKTOP) &&
       (this.client.activities.length === 0 /* on all activities */ ||
         this.client.activities.indexOf(activity) !== -1)
     );
@@ -401,7 +447,7 @@ export class DriverWindowImpl implements DriverWindow {
     // this.log.log(`group: ${win.group}`);
     return (
       this.visible(surfImpl.activity, surfImpl.desktop) &&
-      // win.surface.id == surf.id &&
+      // win.surface?.screen == surf.screen &&
       win.group == surf.group
     );
   }

@@ -219,7 +219,9 @@ void Controller::registerShortcuts()
     addShortcut("swap_group_9_surface", "Swap Group 9 to Active Monitor", "Meta+Shift+9", [=]() {
         qDebug(Bi) << "Swap Group 9 to Active Monitor Triggered!";
     });
-
+    addShortcut("swap_group_0_surface", "Swap Group 0 to Active Monitor", "Meta+Shift+0", [=]() {
+        qDebug(Bi) << "Swap Group 0 to Active Monitor Triggered!";
+    });
 
     addShortcut("change_window_group_1", "Send Active Window to Group 1", "Meta+Ctrl+1", [=]() {
         qDebug(Bi) << "Send Active Window to Group 1 Triggered!";
@@ -248,7 +250,9 @@ void Controller::registerShortcuts()
     addShortcut("change_window_group_9", "Send Active Window to Group 9", "Meta+Ctrl+9", [=]() {
         qDebug(Bi) << "Send Active Window to Group 9 Triggered!";
     });
-
+    addShortcut("change_window_group_0", "Send Active Window to Group 0", "Meta+Ctrl+0", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 0 Triggered!";
+    });
 }
 
 void Controller::loadExistingWindows()

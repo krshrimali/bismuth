@@ -82,7 +82,7 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.screen,
       this.activity,
       this.desktop + 1,
-      this.group,
+      this.group + 1,
       this.activityInfo,
       this.config,
       this.proxy,

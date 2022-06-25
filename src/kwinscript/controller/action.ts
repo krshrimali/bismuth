@@ -775,6 +775,19 @@ export class SwapGroup9ToSurface extends SwapGroupToSurface {
   }
 }
 
+export class SwapGroup0ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      0,
+      "swap_group_0_surface",
+      "Swap Group 0 to Active Monitor",
+      "Meta+Shift+0",
+      log
+    );
+  }
+}
+
 abstract class ChangeWindowToGroup extends ActionImpl implements Action {
   constructor(
     protected engine: Engine,
@@ -904,6 +917,19 @@ export class ChangeWindowToGroup9 extends ChangeWindowToGroup {
       "change_window_group_9",
       "Send Active Window to Group 9",
       "Meta+Ctrl+9",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup0 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      0,
+      "change_window_group_0",
+      "Send Active Window to Group 0",
+      "Meta+Ctrl+0",
       log
     );
   }

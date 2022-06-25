@@ -168,11 +168,11 @@ export class WindowStoreImpl implements WindowStore {
 
   public tileableWindowsOn(surf: DriverSurface): EngineWindow[] {
     return this.list.filter(
-      (win) => win.tileable && win.surface.id === surf.id
+      (win) => win.tileable && win.surface?.id === surf.id
     );
   }
 
   public allWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.surface.id === surf.id);
+    return this.list.filter((win) => win.surface?.id === surf.id);
   }
 }

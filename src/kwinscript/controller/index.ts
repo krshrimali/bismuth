@@ -61,7 +61,8 @@ export interface Controller {
    * React to screen focus change
    */
   onCurrentSurfaceChanged(): void;
-  onAllSurfacesChanged(): void;
+  onCurrentActivityChanged(): void;
+  onCurrentDesktopChanged(): void;
 
   /**
    * React to screen update. For example, when the new screen has connected.
@@ -93,6 +94,9 @@ export interface Controller {
    * @param window the window whose screen has changed
    */
   onWindowScreenChanged(window: EngineWindow): void;
+
+  onWindowActivityChanged(window: EngineWindow): void;
+  onWindowDesktopChanged(window: EngineWindow): void;
 
   /**
    * React to window resize operation end. The window
@@ -266,8 +270,14 @@ export class ControllerImpl implements Controller {
     this.engine.arrange(this.currentSurface);
   }
 
-  public onAllSurfacesChanged(): void {
-    this.log.log(["onAllSurfacesChanged", { srf: this.currentSurface }]);
+  public onCurrentActivityChanged(): void {
+    this.log.log(["onCurrentActivityChanged", { srf: this.currentSurface }]);
+    this.engine.arrange();
+  }
+
+  public onCurrentDesktopChanged(): void {
+    this.log.log("onCurrentDesktopChanged");
+    this.driver.onCurrentDesktopChanged();
     this.engine.arrange();
   }
 
@@ -275,20 +285,20 @@ export class ControllerImpl implements Controller {
     this.log.log(["onWindowAdded", { window }]);
     this.engine.manage(window);
 
-    /* move window to next surface if the current surface is "full" */
-    if (window.tileable) {
-      const srf = this.currentSurface;
-      const tiles = this.engine.windows.visibleTiledWindowsOn(srf);
-      const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity;
-      if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
-        const nextSurface = this.currentSurface.next();
-        if (nextSurface) {
-          // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
-          window.surface = nextSurface;
-          this.currentSurface = nextSurface;
-        }
-      }
-    }
+    // /* move window to next surface if the current surface is "full" */
+    // if (window.tileable) {
+    //   const srf = this.currentSurface;
+    //   const tiles = this.engine.windows.visibleTiledWindowsOn(srf);
+    //   const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity;
+    //   if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
+    //     const nextSurface = this.currentSurface.next();
+    //     if (nextSurface) {
+    //       // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
+    //       window.surface = nextSurface;
+    //       this.currentSurface = nextSurface;
+    //     }
+    //   }
+    // }
   }
 
   public onWindowRemoved(window: EngineWindow): void {
@@ -399,9 +409,29 @@ export class ControllerImpl implements Controller {
   }
 
   public onWindowScreenChanged(window: EngineWindow): void {
-    //TODO only arrange the surface the window came from and went to
     this.log.log("onWindowScreenChanged");
+    if (!window.surface) {
+      return;
+    }
     this.moveWindowToSurface(window, window.surface);
+  }
+
+  public onWindowActivityChanged(window: EngineWindow): void {
+    this.log.log("onWindowActivityChanged");
+    if (!window.screen) {
+      return;
+    }
+    this.engine.arrange(this.screens()[window.screen]);
+    // this.moveWindowToSurface(window, window.surface);
+  }
+
+  public onWindowDesktopChanged(window: EngineWindow): void {
+    this.log.log("onWindowDesktopChanged");
+    if (!window.screen) {
+      return;
+    }
+    this.engine.arrange(this.screens()[window.screen]);
+    // this.moveWindowToSurface(window, window.surface);
   }
 
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack
@@ -560,6 +590,7 @@ export class ControllerImpl implements Controller {
       new Action.SwapGroup7ToSurface(this.engine, this.log),
       new Action.SwapGroup8ToSurface(this.engine, this.log),
       new Action.SwapGroup9ToSurface(this.engine, this.log),
+      new Action.SwapGroup0ToSurface(this.engine, this.log),
 
       new Action.ChangeWindowToGroup1(this.engine, this.log),
       new Action.ChangeWindowToGroup2(this.engine, this.log),
@@ -570,6 +601,7 @@ export class ControllerImpl implements Controller {
       new Action.ChangeWindowToGroup7(this.engine, this.log),
       new Action.ChangeWindowToGroup8(this.engine, this.log),
       new Action.ChangeWindowToGroup9(this.engine, this.log),
+      new Action.ChangeWindowToGroup0(this.engine, this.log),
 
       new Action.ToggleActiveWindowFloating(this.engine, this.log),
       new Action.PushActiveWindowIntoMasterAreaFront(this.engine, this.log),

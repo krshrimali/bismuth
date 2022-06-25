@@ -55,6 +55,8 @@ export interface Driver {
    */
   showNotification(text: string, icon?: string, hint?: string): void;
 
+  onCurrentDesktopChanged(): void;
+
   /**
    * Bind script to the various KWin events
    */
@@ -87,18 +89,20 @@ export interface Driver {
 
 export class DriverImpl implements Driver {
   private groupMap: { [key: number]: number };
-  private groupMapSurface: { [screen: number]: number };
+  private groupMapSurface: { [desktop: string]: { [screen: string]: number } };
   public get currentSurface(): DriverSurface {
     // this.log.log(
     //   `for ${this.proxy.workspace().activeScreen} making ${
     //     this.groupMap[this.proxy.workspace().activeScreen]
     //   }`
     // );
+    const desktop = this.proxy.workspace().currentDesktop;
+    const screen = this.proxy.workspace().activeScreen;
     return new DriverSurfaceImpl(
-      this.proxy.workspace().activeScreen,
+      screen,
       this.proxy.workspace().currentActivity,
-      this.proxy.workspace().currentDesktop,
-      this.groupMapSurface[this.proxy.workspace().activeScreen],
+      desktop,
+      this.groupMapSurface[desktop][screen],
       this.qml.activityInfo,
       this.config,
       this.proxy,
@@ -160,7 +164,7 @@ export class DriverImpl implements Driver {
           screen,
           activity,
           desktop,
-          this.groupMapSurface[screen],
+          this.groupMapSurface[desktop][screen],
           this.qml.activityInfo,
           this.config,
           this.proxy,
@@ -198,17 +202,21 @@ export class DriverImpl implements Driver {
     this.groupMap = {};
     this.groupMapSurface = {};
 
+    const numDesktops = this.proxy.workspace().desktops;
+    for (let desktop = 1; desktop <= numDesktops; desktop++) {
+      this.groupMapSurface[desktop] = {};
+      // custom group mapping for misordered screens
+      this.groupMapSurface[desktop][1] = 1 + (desktop - 1) * 0;
+      this.groupMapSurface[desktop][3] = 2 + (desktop - 1) * 10;
+      this.groupMapSurface[desktop][2] = 3 + (desktop - 1) * 10;
+      this.groupMapSurface[desktop][0] = 4 + (desktop - 1) * 10;
+      this.groupMapSurface[desktop][4] = 5 + (desktop - 1) * 10;
+    }
+
     // // set initial groupId for each surface to its screen number
     // for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
     //   this.groupMapSurface[screen] = screen + 1; // start groups at 1
     // }
-
-    // custom group mapping for misordered screens
-    this.groupMapSurface[1] = 1;
-    this.groupMapSurface[3] = 2;
-    this.groupMapSurface[2] = 3;
-    this.groupMapSurface[0] = 4;
-    this.groupMapSurface[4] = 5;
 
     // TODO: find a better way to to this
     if (this.config.preventMinimize && this.config.monocleMinimizeRest) {
@@ -241,13 +249,15 @@ export class DriverImpl implements Driver {
           this.config,
           this.log
         );
-        for (const surf of controller.screens()) {
-          if (surf.group == win.window.group) {
-            win.window.hidden = false;
-            return win;
+        if (!win.shouldIgnore) {
+          for (const surf of controller.screens()) {
+            if (surf.group == win.window.group) {
+              win.window.hidden = false;
+              return win;
+            }
           }
+          win.window.hidden = true;
         }
-        win.window.hidden = true;
         return win;
       }
     );
@@ -260,38 +270,32 @@ export class DriverImpl implements Driver {
     const onClientAdded = (client: KWin.Client): void => {
       this.log.log(`Client added to screen ${client.screen}: ${client}`);
 
-      let group = this.groupMapSurface[client.screen];
+      const desktop = this.proxy.workspace().currentDesktop;
+      const group = this.groupMapSurface[desktop][client.screen];
 
-      if (this.groupMap[client.windowId]) {
-        group = this.groupMap[client.windowId];
-        this.log.log(
-          `new client already had group ${group} 0x${client.windowId.toString(
-            16
-          )}`
-        );
-        this.groupMap[client.windowId] = group;
-      } else {
-        this.log.log(
-          `initially setting client 0x${client.windowId.toString(
-            16
-          )} to group ${group}`
-        );
-        this.groupMap[client.windowId] = group;
-      }
+      this.log.log(
+        `initially setting client 0x${client.windowId.toString(
+          16
+        )} to group ${group}`
+      );
 
+      this.groupMap[client.windowId] = group;
       const window = this.windowMap.add(client);
 
       this.controller.onWindowAdded(window);
+
       if (window.state === WindowState.Unmanaged) {
         this.log.log(
           `Window becomes unmanaged and gets removed :( The client was ${client}`
         );
         this.windowMap.remove(client);
+        delete this.groupMap[client.windowId];
       } else {
         this.log.log(`Client is ok, can manage. Bind events now...`);
         this.bindWindowEvents(window, client);
       }
     };
+
 
     const onClientRemoved = (client: KWin.Client): void => {
       const window = this.windowMap.get(client);
@@ -334,11 +338,11 @@ export class DriverImpl implements Driver {
       );
 
     this.connect(this.kwinApi.workspace.currentActivityChanged, () =>
-      this.controller.onAllSurfacesChanged()
+      this.controller.onCurrentActivityChanged()
     );
 
     this.connect(this.kwinApi.workspace.currentDesktopChanged, () =>
-      this.controller.onAllSurfacesChanged()
+      this.controller.onCurrentDesktopChanged()
     );
 
     this.connect(this.kwinApi.workspace.clientAdded, onClientAdded);
@@ -361,21 +365,20 @@ export class DriverImpl implements Driver {
    * @param client window client object specified by KWin
    */
   private manageWindow(client: KWin.Client): void {
-    let group = this.groupMapSurface[client.screen];
-    if (this.groupMap[client.windowId]) {
-      group = this.groupMap[client.windowId];
-    } else {
-      this.log.log(
-        `initially setting client ${client.windowId} to group ${group}`
-      );
-      this.groupMap[client.windowId] = group;
-    }
+    const desktop = this.proxy.workspace().currentDesktop;
+    const group = this.groupMapSurface[desktop][client.screen];
+
+    this.log.log(
+      `initially setting client ${client.windowId} to group ${group}`
+    );
 
     // Add window to our window map
+    this.groupMap[client.windowId] = group;
     const window = this.windowMap.add(client);
 
     if (window.shouldIgnore) {
       this.windowMap.remove(client);
+      delete this.groupMap[client.windowId];
       return;
     }
 
@@ -413,7 +416,11 @@ export class DriverImpl implements Driver {
       groupId;
 
     for (const surf of this.controller.screens()) {
-      if (this.groupMapSurface[surf.screen] == groupId) {
+      if (
+        this.groupMapSurface[this.proxy.workspace().currentDesktop][
+          surf.screen
+        ] == groupId
+      ) {
         this.log.log(`showing window on surface ${surf.screen}`);
 
         window.surface = surf;
@@ -440,15 +447,16 @@ export class DriverImpl implements Driver {
   }
 
   public swapGroupToSurface(groupId: number, screen: number): void {
-    const swapOutGroup = this.groupMapSurface[screen];
+    const currentDesktop = this.proxy.workspace().currentDesktop;
+    const swapOutGroup = this.groupMapSurface[currentDesktop][screen];
 
+    // find if a surface is already showing this group and needs to be swapped
     for (const surf of this.controller.screens()) {
-      // find if a surface is already showing this group
-      if (this.groupMapSurface[surf.screen] == groupId) {
+      if (this.groupMapSurface[currentDesktop][surf.screen] == groupId) {
         this.log.log(
           `swapping screen ${screen} group ${swapOutGroup} with screen ${surf.screen} group ${groupId}`
         );
-        this.groupMapSurface[screen] = -1;
+        this.groupMapSurface[currentDesktop][screen] = -1;
 
         this.controller.swapGroupToSurface(swapOutGroup, surf.screen);
         // this.groupMapSurface[surf.screen] = this.groupMapSurface[screen];
@@ -456,13 +464,26 @@ export class DriverImpl implements Driver {
       }
     }
 
+    // otherwise just map the group to the surface
+
     this.log.log(`setting screen ${screen} to group ${groupId}`);
-    this.groupMapSurface[screen] = groupId;
+    this.groupMapSurface[currentDesktop][screen] = groupId;
+
     // this.controller.screens()[screen].group = groupId;
   }
 
   public showNotification(text: string, icon?: string, hint?: string): void {
     this.qml.popupDialog.show(text, icon, hint);
+  }
+
+  public onCurrentDesktopChanged(): void {
+    // const desktop = this.currentDesktop;
+    // for (const surf of this.controller.screens()) {
+    //   this.swapGroupToSurface(
+    //     this.groupMapSurface[desktop][surf.screen],
+    //     surf.screen
+    //   );
+    // }
   }
 
   public drop(): void {
@@ -586,9 +607,17 @@ export class DriverImpl implements Driver {
       )
     );
 
-    this.connect(client.desktopChanged, () =>
-      this.controller.onWindowChanged(window, `desktop=${client.desktop}`)
-    );
+    this.connect(client.desktopChanged, () => {
+      // ignore hijacked desktop ids
+      if (client.desktop == -1 || client.desktop == 3) {
+        this.log.log(`ignoring desktop ${client.desktop}`);
+        return;
+      }
+      this.log.log(`kwin tried to move window to desktop ${client.desktop}`);
+
+      client.desktop = this.currentDesktop;
+      // this.controller.onWindowDesktopChanged(window);
+    });
 
     this.connect(client.shadeChanged, () => {
       this.controller.onWindowShadeChanged(window);
