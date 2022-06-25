@@ -55,7 +55,12 @@ export interface Controller {
    * @param icon an optional name of the icon to display in the pop-up.
    * @param hint an optional string displayed beside the main text.
    */
-  showNotification(text: string, icon?: string, hint?: string): void;
+  showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void;
 
   /**
    * React to screen focus change
@@ -168,8 +173,8 @@ export interface Controller {
    */
   manageWindow(win: EngineWindow): void;
 
-  swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
-  swapSurfaceToActiveScreen(surfaceNum: number): void;
+  // swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
+  // swapSurfaceToActiveScreen(surfaceNum: number): void;
   moveWindowToGroup(
     groupId: number,
     window?: EngineWindow | null
@@ -256,8 +261,13 @@ export class ControllerImpl implements Controller {
     this.driver.currentSurface = value;
   }
 
-  public showNotification(text: string, icon?: string, hint?: string): void {
-    this.driver.showNotification(text, icon, hint);
+  public showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void {
+    this.driver.showNotification(text, icon, hint, screen);
   }
 
   public onSurfaceUpdate(): void {
@@ -277,6 +287,9 @@ export class ControllerImpl implements Controller {
 
   public onCurrentDesktopChanged(): void {
     this.log.log("onCurrentDesktopChanged");
+    for (const surf of this.screens()) {
+      this.showNotification("Group", undefined, `${surf.group}`, surf.screen);
+    }
     this.driver.onCurrentDesktopChanged();
     this.engine.arrange();
   }
@@ -481,17 +494,17 @@ export class ControllerImpl implements Controller {
     this.engine.arrange(win.surface);
   }
 
-  public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
-    // this.currentSurface.currentGroup = groupId;
-    surface.screen = screen;
-  }
+  // public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
+  //   // this.currentSurface.currentGroup = groupId;
+  //   surface.screen = screen;
+  // }
 
-  public swapSurfaceToActiveScreen(surfaceNum: number): void {
-    this.log.log(
-      `swapping surface ${surfaceNum} to screen ${this.currentSurface.screen}`
-    );
-    this.engine.swapSurfaceToActiveScreen(surfaceNum);
-  }
+  // public swapSurfaceToActiveScreen(surfaceNum: number): void {
+  //   this.log.log(
+  //     `swapping surface ${surfaceNum} to screen ${this.currentSurface.screen}`
+  //   );
+  //   this.engine.swapSurfaceToActiveScreen(surfaceNum);
+  // }
 
   public manageWindow(win: EngineWindow): void {
     this.engine.manage(win);
@@ -590,7 +603,17 @@ export class ControllerImpl implements Controller {
       new Action.SwapGroup7ToSurface(this.engine, this.log),
       new Action.SwapGroup8ToSurface(this.engine, this.log),
       new Action.SwapGroup9ToSurface(this.engine, this.log),
-      new Action.SwapGroup0ToSurface(this.engine, this.log),
+      new Action.SwapGroup10ToSurface(this.engine, this.log),
+      new Action.SwapGroup11ToSurface(this.engine, this.log),
+      new Action.SwapGroup12ToSurface(this.engine, this.log),
+      new Action.SwapGroup13ToSurface(this.engine, this.log),
+      new Action.SwapGroup14ToSurface(this.engine, this.log),
+      new Action.SwapGroup15ToSurface(this.engine, this.log),
+      new Action.SwapGroup16ToSurface(this.engine, this.log),
+      new Action.SwapGroup17ToSurface(this.engine, this.log),
+      new Action.SwapGroup18ToSurface(this.engine, this.log),
+      new Action.SwapGroup19ToSurface(this.engine, this.log),
+      new Action.SwapGroup20ToSurface(this.engine, this.log),
 
       new Action.ChangeWindowToGroup1(this.engine, this.log),
       new Action.ChangeWindowToGroup2(this.engine, this.log),
@@ -601,7 +624,17 @@ export class ControllerImpl implements Controller {
       new Action.ChangeWindowToGroup7(this.engine, this.log),
       new Action.ChangeWindowToGroup8(this.engine, this.log),
       new Action.ChangeWindowToGroup9(this.engine, this.log),
-      new Action.ChangeWindowToGroup0(this.engine, this.log),
+      new Action.ChangeWindowToGroup10(this.engine, this.log),
+      new Action.ChangeWindowToGroup11(this.engine, this.log),
+      new Action.ChangeWindowToGroup12(this.engine, this.log),
+      new Action.ChangeWindowToGroup13(this.engine, this.log),
+      new Action.ChangeWindowToGroup14(this.engine, this.log),
+      new Action.ChangeWindowToGroup15(this.engine, this.log),
+      new Action.ChangeWindowToGroup16(this.engine, this.log),
+      new Action.ChangeWindowToGroup17(this.engine, this.log),
+      new Action.ChangeWindowToGroup18(this.engine, this.log),
+      new Action.ChangeWindowToGroup19(this.engine, this.log),
+      new Action.ChangeWindowToGroup20(this.engine, this.log),
 
       new Action.ToggleActiveWindowFloating(this.engine, this.log),
       new Action.PushActiveWindowIntoMasterAreaFront(this.engine, this.log),

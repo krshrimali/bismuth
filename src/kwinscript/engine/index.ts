@@ -172,8 +172,8 @@ export interface Engine {
 
   moveWindowToSurface(window: EngineWindow, surface: DriverSurface): void;
 
-  swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
-  swapSurfaceToActiveScreen(surfaceNum: number): void;
+  // swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
+  // swapSurfaceToActiveScreen(surfaceNum: number): void;
   swapGroupToSurface(groupId: number, screen: number): void;
   swapGroupToActiveSurface(groupId: number): void;
 
@@ -1006,6 +1006,12 @@ export class EngineImpl implements Engine {
       return;
     }
 
+    this.controller.showNotification(
+      `Move window to group`,
+      undefined,
+      `${groupId}`
+    );
+
     const oldSurf = this.controller.moveWindowToGroup(groupId, window);
 
     if (oldSurf) {
@@ -1045,7 +1051,10 @@ export class EngineImpl implements Engine {
   }
 
   public swapGroupToActiveSurface(groupId: number): void {
+    const activeDesktop = this.controller.currentDesktop;
     const activeScreen = this.controller.currentSurface.screen;
+    this.controller.showNotification(`Recall group`, undefined, `${groupId}`);
+
     this.swapGroupToSurface(groupId, activeScreen);
     // set focus to first window in the new group
     this.controller.currentWindow = this.windows.visibleTiledWindowsOn(
@@ -1061,40 +1070,41 @@ export class EngineImpl implements Engine {
     this.log.log(
       `moving from group ${window.window.group} to screen ${surface.screen}`
     );
+    this.controller.showNotification(`Move window to screen ${surface.screen}`);
     // window.surface = surface;
     this.arrangeScreen(surface);
     this.commitArrangement(surface);
   }
 
-  public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
-    // this.controller.screens()[screen].
-    // surface.screen = screen;
+  // public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
+  //   // this.controller.screens()[screen].
+  //   // surface.screen = screen;
 
-    const surfaceA = surface;
-    const surfaceB = this.controller.screens()[screen];
+  //   const surfaceA = surface;
+  //   const surfaceB = this.controller.screens()[screen];
 
-    const windowsA = this.windows.visibleTiledWindowsOn(surfaceA);
-    const windowsB = this.windows.visibleTiledWindowsOn(surfaceB);
+  //   const windowsA = this.windows.visibleTiledWindowsOn(surfaceA);
+  //   const windowsB = this.windows.visibleTiledWindowsOn(surfaceB);
 
-    for (const win of windowsA) {
-      win.surface = surfaceB;
-    }
+  //   for (const win of windowsA) {
+  //     win.surface = surfaceB;
+  //   }
 
-    for (const win of windowsB) {
-      win.surface = surfaceA;
-    }
+  //   for (const win of windowsB) {
+  //     win.surface = surfaceA;
+  //   }
 
-    this.arrange(surfaceA);
-    this.arrange(surfaceB);
-  }
+  //   this.arrange(surfaceA);
+  //   this.arrange(surfaceB);
+  // }
 
-  public swapSurfaceToActiveScreen(surfaceNum: number): void {
-    this.log.log(
-      `swapping surface ${surfaceNum} to screen ${this.controller.currentSurface.screen}`
-    );
+  // public swapSurfaceToActiveScreen(surfaceNum: number): void {
+  //   this.log.log(
+  //     `swapping surface ${surfaceNum} to screen ${this.controller.currentSurface.screen}`
+  //   );
 
-    this.swapSurfaceToScreen(this.controller.currentSurface, surfaceNum);
-  }
+  //   this.swapSurfaceToScreen(this.controller.currentSurface, surfaceNum);
+  // }
 
   public showNotification(text: string, icon?: string, hint?: string): void {
     this.controller.showNotification(text, icon, hint);

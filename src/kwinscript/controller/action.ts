@@ -775,14 +775,144 @@ export class SwapGroup9ToSurface extends SwapGroupToSurface {
   }
 }
 
-export class SwapGroup0ToSurface extends SwapGroupToSurface {
+export class SwapGroup10ToSurface extends SwapGroupToSurface {
   constructor(protected engine: Engine, protected log: Log) {
     super(
       engine,
-      0,
-      "swap_group_0_surface",
-      "Swap Group 0 to Active Monitor",
+      10,
+      "swap_group_10_surface",
+      "Swap Group 10 to Active Monitor",
       "Meta+Shift+0",
+      log
+    );
+  }
+}
+
+export class SwapGroup11ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      11,
+      "swap_group_11_surface",
+      "Swap Group 11 to Active Monitor",
+      "Meta+Hyper+1",
+      log
+    );
+  }
+}
+
+export class SwapGroup12ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      12,
+      "swap_group_12_surface",
+      "Swap Group 12 to Active Monitor",
+      "Meta+Hyper+2",
+      log
+    );
+  }
+}
+
+export class SwapGroup13ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      13,
+      "swap_group_13_surface",
+      "Swap Group 13 to Active Monitor",
+      "Meta+Hyper+3",
+      log
+    );
+  }
+}
+
+export class SwapGroup14ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      14,
+      "swap_group_14_surface",
+      "Swap Group 14 to Active Monitor",
+      "Meta+Hyper+4",
+      log
+    );
+  }
+}
+
+export class SwapGroup15ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      15,
+      "swap_group_15_surface",
+      "Swap Group 15 to Active Monitor",
+      "Meta+Hyper+5",
+      log
+    );
+  }
+}
+
+export class SwapGroup16ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      16,
+      "swap_group_16_surface",
+      "Swap Group 16 to Active Monitor",
+      "Meta+Hyper+6",
+      log
+    );
+  }
+}
+
+export class SwapGroup17ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      17,
+      "swap_group_17_surface",
+      "Swap Group 17 to Active Monitor",
+      "Meta+Hyper+7",
+      log
+    );
+  }
+}
+
+export class SwapGroup18ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      18,
+      "swap_group_18_surface",
+      "Swap Group 18 to Active Monitor",
+      "Meta+Hyper+8",
+      log
+    );
+  }
+}
+
+export class SwapGroup19ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      19,
+      "swap_group_19_surface",
+      "Swap Group 19 to Active Monitor",
+      "Meta+Hyper+9",
+      log
+    );
+  }
+}
+
+export class SwapGroup20ToSurface extends SwapGroupToSurface {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      20,
+      "swap_group_20_surface",
+      "Swap Group 20 to Active Monitor",
+      "Meta+Hyper+0",
       log
     );
   }
@@ -922,14 +1052,144 @@ export class ChangeWindowToGroup9 extends ChangeWindowToGroup {
   }
 }
 
-export class ChangeWindowToGroup0 extends ChangeWindowToGroup {
+export class ChangeWindowToGroup10 extends ChangeWindowToGroup {
   constructor(protected engine: Engine, protected log: Log) {
     super(
       engine,
-      0,
-      "change_window_group_0",
-      "Send Active Window to Group 0",
+      10,
+      "change_window_group_10",
+      "Send Active Window to Group 10",
       "Meta+Ctrl+0",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup11 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      11,
+      "change_window_group_11",
+      "Send Active Window to Group 11",
+      "Hyper+Ctrl+1",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup12 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      12,
+      "change_window_group_12",
+      "Send Active Window to Group 12",
+      "Hyper+Ctrl+2",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup13 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      13,
+      "change_window_group_13",
+      "Send Active Window to Group 13",
+      "Hyper+Ctrl+3",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup14 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      14,
+      "change_window_group_14",
+      "Send Active Window to Group 14",
+      "Hyper+Ctrl+4",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup15 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      15,
+      "change_window_group_15",
+      "Send Active Window to Group 15",
+      "Hyper+Ctrl+5",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup16 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      16,
+      "change_window_group_16",
+      "Send Active Window to Group 16",
+      "Hyper+Ctrl+6",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup17 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      17,
+      "change_window_group_17",
+      "Send Active Window to Group 17",
+      "Hyper+Ctrl+7",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup18 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      18,
+      "change_window_group_18",
+      "Send Active Window to Group 18",
+      "Hyper+Ctrl+8",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup19 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      19,
+      "change_window_group_19",
+      "Send Active Window to Group 19",
+      "Hyper+Ctrl+9",
+      log
+    );
+  }
+}
+
+export class ChangeWindowToGroup20 extends ChangeWindowToGroup {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      20,
+      "change_window_group_20",
+      "Send Active Window to Group 20",
+      "Hyper+Ctrl+0",
       log
     );
   }

@@ -321,8 +321,6 @@ export class DriverWindowImpl implements DriverWindow {
 
     if (!this.shouldIgnore) {
       this.hidden = false;
-      this.log.log("not ignoring");
-    } else {
     }
 
     // if (this.screen < 5) {

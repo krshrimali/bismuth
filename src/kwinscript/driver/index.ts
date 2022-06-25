@@ -53,7 +53,12 @@ export interface Driver {
    * @param icon an optional name of the icon to display in the pop-up.
    * @param hint an optional string displayed beside the main text.
    */
-  showNotification(text: string, icon?: string, hint?: string): void;
+  showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void;
 
   onCurrentDesktopChanged(): void;
 
@@ -203,14 +208,20 @@ export class DriverImpl implements Driver {
     this.groupMapSurface = {};
 
     const numDesktops = this.proxy.workspace().desktops;
+    const numScreens = this.proxy.workspace().numScreens;
+    let groupId = 1;
     for (let desktop = 1; desktop <= numDesktops; desktop++) {
       this.groupMapSurface[desktop] = {};
-      // custom group mapping for misordered screens
-      this.groupMapSurface[desktop][1] = 1 + (desktop - 1) * 0;
-      this.groupMapSurface[desktop][3] = 2 + (desktop - 1) * 10;
-      this.groupMapSurface[desktop][2] = 3 + (desktop - 1) * 10;
-      this.groupMapSurface[desktop][0] = 4 + (desktop - 1) * 10;
-      this.groupMapSurface[desktop][4] = 5 + (desktop - 1) * 10;
+      for (let screen = 0; screen < numScreens; screen++) {
+        this.groupMapSurface[desktop][screen] = groupId++;
+      }
+
+      // // custom group mapping for misordered screens
+      // this.groupMapSurface[desktop][1] = 1 + (desktop - 1) * 10;
+      // this.groupMapSurface[desktop][3] = 2 + (desktop - 1) * 10;
+      // this.groupMapSurface[desktop][2] = 3 + (desktop - 1) * 10;
+      // this.groupMapSurface[desktop][0] = 4 + (desktop - 1) * 10;
+      // this.groupMapSurface[desktop][4] = 5 + (desktop - 1) * 10;
     }
 
     // // set initial groupId for each surface to its screen number
@@ -295,7 +306,6 @@ export class DriverImpl implements Driver {
         this.bindWindowEvents(window, client);
       }
     };
-
 
     const onClientRemoved = (client: KWin.Client): void => {
       const window = this.windowMap.get(client);
@@ -472,8 +482,13 @@ export class DriverImpl implements Driver {
     // this.controller.screens()[screen].group = groupId;
   }
 
-  public showNotification(text: string, icon?: string, hint?: string): void {
-    this.qml.popupDialog.show(text, icon, hint);
+  public showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void {
+    this.qml.popupDialog.show(text, icon, hint, screen);
   }
 
   public onCurrentDesktopChanged(): void {
