@@ -34,6 +34,7 @@ std::optional<PlasmaApi::Client> Workspace::activeClient() const
 
 void Workspace::setActiveClient(std::optional<PlasmaApi::Client> client)
 {
+    qDebug(Bi) << "omgwtf Workspace::setActiveClient";
     auto valueToSet = client.has_value() ? client->m_kwinImpl : nullptr;
     m_kwinImpl->setProperty("activeClient", QVariant::fromValue(valueToSet));
 }
@@ -65,11 +66,71 @@ void Workspace::wrapSignals()
 
 QRect Workspace::clientArea(ClientAreaOption option, int screen, int desktop)
 {
+    // qDebug(Bi) << "omgwtf Workspace::clientArea";
     BI_METHOD_IMPL_WRAP(QRect, "clientArea(ClientAreaOption, int, int)", Q_ARG(ClientAreaOption, option), Q_ARG(int, screen), Q_ARG(int, desktop));
+};
+
+// bool Workspace::setWindowHidden(QObject *client, bool isHidden)
+// {
+//   qDebug(Bi) << "omgwtf Workspace::setWindowHidden";
+//   // return true;
+
+//   // KWin::AbstractClient *cli = reinterpret_cast<KWin::AbstractClient *>(client);
+
+//   // BI_METHOD_IMPL_WRAP(bool, "setWindowHidden(KWin::AbstractClient *, bool)", Q_ARG(KWin::AbstractClient *, cli), Q_ARG(bool, isHidden));
+//   // BI_METHOD_IMPL_WRAP(bool, "setWindowHidden()", QGenericArgument(nullptr));
+
+//   auto apiCall = [&]() -> bool {
+//     BI_METHOD_IMPL_WRAP(bool, "setWindowHidden()", QGenericArgument(nullptr));
+//   };
+
+//   auto apiCallRes = apiCall();
+
+//   return apiCallRes;
+// };
+
+bool Workspace::isWindowHidden(QObject *client)
+{
+  KWin::AbstractClient *cli = reinterpret_cast<KWin::AbstractClient *>(client);
+  auto apiCall = [&]() -> bool {
+    // BI_METHOD_IMPL_WRAP(QString, "wtf(int)", Q_ARG(int, screen));
+    BI_METHOD_IMPL_WRAP(bool, "isWindowHidden(KWin::Window *)", Q_ARG(KWin::AbstractClient *, cli));
+  };
+
+  auto apiCallRes = apiCall();
+
+  // qDebug(Bi) << apiCallRes;
+
+  return apiCallRes;
+}
+
+bool Workspace::setWindowHidden(QObject *client, bool isHidden)
+{
+  // qDebug(Bi) << "omgwtf Workspace::setWindowHidden";
+  // return true;
+
+  KWin::AbstractClient *cli = reinterpret_cast<KWin::AbstractClient *>(client);
+  // int *i = 0;
+  // KWin::AbstractClient *i = 0;
+
+  // BI_METHOD_IMPL_WRAP(bool, "setWindowHidden(KWin::AbstractClient *, bool)", Q_ARG(KWin::AbstractClient *, cli), Q_ARG(bool, isHidden));
+  // BI_METHOD_IMPL_WRAP(bool, "setWindowHidden()", QGenericArgument(nullptr));
+
+  auto apiCall = [&]() -> bool {
+    // BI_METHOD_IMPL_WRAP(QString, "wtf(int)", Q_ARG(int, screen));
+    BI_METHOD_IMPL_WRAP(bool, "setWindowHidden(KWin::Window *, bool)", Q_ARG(KWin::AbstractClient *, cli), Q_ARG(bool, isHidden));
+  };
+
+  auto apiCallRes = apiCall();
+
+  // qDebug(Bi) << apiCallRes;
+
+  return apiCallRes;
 };
 
 std::vector<PlasmaApi::Client> Workspace::clientList() const
 {
+    qDebug(Bi) << "omgwtf Workspace::clientList";
     auto apiCall = [&]() -> QList<KWin::AbstractClient *> {
         BI_METHOD_IMPL_WRAP(QList<KWin::AbstractClient *>, "clientList()", QGenericArgument(nullptr));
     };

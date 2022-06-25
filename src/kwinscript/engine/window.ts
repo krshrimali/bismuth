@@ -123,6 +123,8 @@ export interface EngineWindow {
    */
   surface: DriverSurface;
 
+  // group: number;
+
   /**
    * General state of the window: floating, maximized, tiled etc.
    */
@@ -168,6 +170,7 @@ export interface EngineWindow {
 }
 
 export class EngineWindowImpl implements EngineWindow {
+  // private _group: number;
   public static isTileableState(state: WindowState): boolean {
     return (
       state === WindowState.Tiled ||
@@ -289,6 +292,9 @@ export class EngineWindowImpl implements EngineWindow {
 
   public set surface(srf: DriverSurface) {
     this.window.surface = srf;
+    this.window.group = srf.group;
+
+    // this._group = srf.currentGroup;
   }
 
   public get weight(): number {
@@ -305,6 +311,21 @@ export class EngineWindowImpl implements EngineWindow {
     const srfID = this.window.surface.id;
     this.weightMap[srfID] = value;
   }
+
+  // public get group(): number {
+  //   return this._group;
+  // }
+
+  // public set group(groupId: number) {
+  //   this.log.log(`sending from group ${this.group} to ${groupId}`);
+  //   this._group = groupId;
+
+  //   if (this.group == groupId) {
+  //     return;
+  //   }
+
+  //   // this.window.hidden = groupId != this.surface.currentGroup;
+  // }
 
   public get isDialog(): boolean {
     return this.window.isDialog;
@@ -323,6 +344,8 @@ export class EngineWindowImpl implements EngineWindow {
     this.id = window.id;
     this.window = window;
     this.internalStatePreviouslyAskedToChangeTo = WindowState.Floating;
+    // this._group = window.surface.currentGroup;
+    // this.log.log(`made on ${this._group} ${this}`);
 
     this.floatGeometry = window.geometry;
     this.geometry = window.geometry;

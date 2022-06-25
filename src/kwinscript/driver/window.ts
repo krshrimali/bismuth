@@ -10,6 +10,7 @@ import { clip, matchWords } from "../util/func";
 import { Config } from "../config";
 import { Log } from "../util/log";
 import { TSProxy } from "../extern/proxy";
+import { EngineWindow } from "../engine/window";
 
 /**
  * KWin window representation.
@@ -64,6 +65,10 @@ export interface DriverWindow {
    * Window's current surface
    */
   surface: DriverSurface;
+
+  group: number;
+
+  hidden: boolean;
 
   /**
    * Whether the window is minimized
@@ -189,9 +194,11 @@ export class DriverWindowImpl implements DriverWindow {
       this._screen,
       activity,
       desktop,
+      this.group,
       this.qml.activityInfo,
       this.config,
-      this.proxy
+      this.proxy,
+      this.log
     );
   }
 
@@ -205,10 +212,56 @@ export class DriverWindowImpl implements DriverWindow {
     }
 
     this._screen = surfImpl.screen;
+
+    if (surf.screen < 5) {
+      this.hidden = false;
+    } else {
+      this.hidden = true;
+    }
   }
 
   private noBorderManaged: boolean;
   private noBorderOriginal: boolean;
+
+  public get group(): number {
+    // if (!this._group) {
+    //   return this.surface.group;
+    // }
+    return this._group;
+  }
+
+  public set group(groupId: number) {
+    this._group = groupId;
+  }
+
+  public get hidden(): boolean {
+    return this.proxy.workspace().isWindowHidden(this.client);
+    // return this.client.isHidden();
+    // return false;
+  }
+
+  public set hidden(isHidden: boolean) {
+    if (this.hidden == isHidden) {
+      return;
+    }
+
+    if (this.client.minimized) {
+      this.log.log(`not hiding minimized window ${this}`);
+      return;
+    }
+
+    this.log.log(`set hidden ${isHidden} ${this}`);
+
+    // this.log.log(`setHidden ${isHidden}`);
+    // this.client.setHidden(isHidden);
+    // this.log.log(`omg`);
+    // const wtf = this.proxy.workspace().setWindowHidden(this.client, isHidden);
+    // const wtf = this.proxy.workspace().setWindowHidden();
+    this.proxy.workspace().setWindowHidden(this.client, isHidden);
+    // this.proxy.workspace().slotWindowToDesktopDown();
+    // this.log.log(`wtf`);
+    // this.log.log(`wtf ${wtf}`);
+  }
 
   /**
    * Create a window from the KWin client object
@@ -223,13 +276,20 @@ export class DriverWindowImpl implements DriverWindow {
     private qml: Bismuth.Qml.Main,
     private config: Config,
     private log: Log,
-    private proxy: TSProxy
+    private proxy: TSProxy,
+    private _group: number
   ) {
     this.id = DriverWindowImpl.generateID(client);
     this.maximized = false;
     this.noBorderManaged = false;
     this.noBorderOriginal = client.noBorder;
     this._screen = client.screen;
+
+    if (this.screen < 5) {
+      this.hidden = false;
+    } else {
+      this.hidden = true;
+    }
   }
 
   public static generateID(client: KWin.Client): string {
@@ -251,7 +311,15 @@ export class DriverWindowImpl implements DriverWindow {
     //   `
     // );
 
-    if (this.client.move || this.client.resize) {
+    if (this.surface.group != this.group) {
+      this.log.log(`is hidden ${this}`);
+      this.hidden = true;
+      return;
+    }
+
+    this.hidden = false;
+
+    if (this.client.move || this.client.resize || this.hidden) {
       return;
     }
 
@@ -299,7 +367,11 @@ export class DriverWindowImpl implements DriverWindow {
           geometry = this.adjustGeometry(geometry);
         }
       }
-      this.client.frameGeometry = geometry.toQRect();
+      if (this.client.frameGeometry != geometry.toQRect()) {
+        this.client.frameGeometry = geometry.toQRect();
+      } else {
+        // this.log.log("no update");
+      }
     }
   }
 
@@ -311,8 +383,11 @@ export class DriverWindowImpl implements DriverWindow {
   }
 
   public visible(activity: string, desktop: number): boolean {
+    // this.log.log(`screen: ${this.screen}`);
     return (
       !this.client.minimized &&
+      // !this.hidden &&
+      this.screen < 5 &&
       (this.client.desktop === desktop ||
         this.client.desktop === -1) /* on all desktop */ &&
       (this.client.activities.length === 0 /* on all activities */ ||
@@ -323,9 +398,11 @@ export class DriverWindowImpl implements DriverWindow {
   public visibleOn(surf: DriverSurface): boolean {
     const surfImpl = surf as DriverSurfaceImpl;
     const win = this as DriverWindow;
+    // this.log.log(`group: ${win.group}`);
     return (
       this.visible(surfImpl.activity, surfImpl.desktop) &&
-      win.surface.id == surf.id
+      // win.surface.id == surf.id &&
+      win.group == surf.group
     );
   }
 

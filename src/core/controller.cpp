@@ -191,6 +191,64 @@ void Controller::registerShortcuts()
     addShortcut("rotate_part", "Rotate Sublayout Clockwise", "Meta+Shift+R", [=]() {
         qDebug(Bi) << "Rotate Sublayout Clockwise Triggered!";
     });
+
+    addShortcut("swap_group_1_surface", "Swap Group 1 to Active Monitor", "Meta+Shift+1", [=]() {
+        qDebug(Bi) << "Swap Group 1 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_2_surface", "Swap Group 2 to Active Monitor", "Meta+Shift+2", [=]() {
+        qDebug(Bi) << "Swap Group 2 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_3_surface", "Swap Group 3 to Active Monitor", "Meta+Shift+3", [=]() {
+        qDebug(Bi) << "Swap Group 3 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_4_surface", "Swap Group 4 to Active Monitor", "Meta+Shift+4", [=]() {
+        qDebug(Bi) << "Swap Group 4 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_5_surface", "Swap Group 5 to Active Monitor", "Meta+Shift+5", [=]() {
+        qDebug(Bi) << "Swap Group 5 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_6_surface", "Swap Group 6 to Active Monitor", "Meta+Shift+6", [=]() {
+        qDebug(Bi) << "Swap Group 6 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_7_surface", "Swap Group 7 to Active Monitor", "Meta+Shift+7", [=]() {
+        qDebug(Bi) << "Swap Group 7 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_8_surface", "Swap Group 8 to Active Monitor", "Meta+Shift+8", [=]() {
+        qDebug(Bi) << "Swap Group 8 to Active Monitor Triggered!";
+    });
+    addShortcut("swap_group_9_surface", "Swap Group 9 to Active Monitor", "Meta+Shift+9", [=]() {
+        qDebug(Bi) << "Swap Group 9 to Active Monitor Triggered!";
+    });
+
+
+    addShortcut("change_window_group_1", "Send Active Window to Group 1", "Meta+Ctrl+1", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 1 Triggered!";
+    });
+    addShortcut("change_window_group_2", "Send Active Window to Group 2", "Meta+Ctrl+2", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 2 Triggered!";
+    });
+    addShortcut("change_window_group_3", "Send Active Window to Group 3", "Meta+Ctrl+3", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 3 Triggered!";
+    });
+    addShortcut("change_window_group_4", "Send Active Window to Group 4", "Meta+Ctrl+4", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 4 Triggered!";
+    });
+    addShortcut("change_window_group_5", "Send Active Window to Group 5", "Meta+Ctrl+5", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 5 Triggered!";
+    });
+    addShortcut("change_window_group_6", "Send Active Window to Group 6", "Meta+Ctrl+6", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 6 Triggered!";
+    });
+    addShortcut("change_window_group_7", "Send Active Window to Group 7", "Meta+Ctrl+7", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 7 Triggered!";
+    });
+    addShortcut("change_window_group_8", "Send Active Window to Group 8", "Meta+Ctrl+8", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 8 Triggered!";
+    });
+    addShortcut("change_window_group_9", "Send Active Window to Group 9", "Meta+Ctrl+9", [=]() {
+        qDebug(Bi) << "Send Active Window to Group 9 Triggered!";
+    });
+
 }
 
 void Controller::loadExistingWindows()

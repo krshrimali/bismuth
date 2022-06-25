@@ -64,6 +64,10 @@ public:
      */
     Q_INVOKABLE QRect clientArea(ClientAreaOption, int screen, int desktop);
 
+    // Q_INVOKABLE bool setWindowHidden(QObject *client, bool isHidden);
+    Q_INVOKABLE bool setWindowHidden(QObject *client, bool isHidden);
+    Q_INVOKABLE bool isWindowHidden(QObject *client);
+
     Q_INVOKABLE std::vector<PlasmaApi::Client> clientList() const;
 
 private Q_SLOTS:

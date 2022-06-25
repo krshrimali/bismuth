@@ -6,6 +6,7 @@
 import { Config } from "../config";
 import { TSProxy } from "../extern/proxy";
 import { Rect } from "../util/rect";
+import { Log } from "../util/log";
 
 /**
  * Surface provided by KWin. Surface is essentially a screen space, but
@@ -28,6 +29,10 @@ export interface DriverSurface {
    */
   readonly workingArea: Readonly<Rect>;
 
+  screen: number;
+
+  readonly group: number;
+
   /**
    * The next surface. The next surface is a virtual desktop, that comes after current one.
    */
@@ -37,27 +42,31 @@ export interface DriverSurface {
 export class DriverSurfaceImpl implements DriverSurface {
   public readonly id: string;
   public readonly ignore: boolean;
-  public readonly workingArea: Rect;
+  public workingArea: Rect;
 
   constructor(
-    public readonly screen: number,
+    private _screen: number,
     public readonly activity: string,
     public readonly desktop: number,
+    public readonly group: number,
     private activityInfo: Plasma.TaskManager.ActivityInfo,
     private config: Config,
-    private proxy: TSProxy
+    private proxy: TSProxy,
+    private log: Log
   ) {
     this.id = this.generateId();
+
+    // this.log.log(`surface made with ${_group}`);
 
     const activityName = activityInfo.activityName(activity);
     this.ignore =
       this.config.ignoreActivity.indexOf(activityName) >= 0 ||
-      this.config.ignoreScreen.indexOf(screen) >= 0;
+      this.config.ignoreScreen.indexOf(this.screen) >= 0;
 
     this.workingArea = Rect.fromQRect(
       this.proxy.workspace().clientArea(
         0, // This is PlacementArea
-        screen,
+        this.screen,
         desktop
       )
     );
@@ -73,10 +82,20 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.screen,
       this.activity,
       this.desktop + 1,
+      this.group,
       this.activityInfo,
       this.config,
-      this.proxy
+      this.proxy,
+      this.log
     );
+  }
+
+  public set screen(screen: number) {
+    this._screen = screen;
+  }
+
+  public get screen(): number {
+    return this._screen;
   }
 
   public toString(): string {

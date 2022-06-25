@@ -69,6 +69,13 @@ declare namespace KWin {
     /* functions */
     clientList(): Client[];
     clientArea(option: number, screen: number, desktop: number): QRect;
+    // setWindowHidden(window: Client, isHidden: boolean): boolean;
+    // setWindowHidden(): boolean;
+    setWindowHidden(client: KWin.Client, isHidden: boolean): boolean;
+    isWindowHidden(client: KWin.Client): boolean;
+    slotWindowToDesktopDown(): void;
+
+    showOutline(geometry: QRect): void;
   }
 
   interface Options {
@@ -282,5 +289,11 @@ declare namespace KWin {
      * @see move
      */
     moveResizedChanged: QSignal;
+
+    setHidden(isHidden: boolean): void;
+
+    isHidden(): boolean;
+
+    clientMaximizedStateChanged: QSignal;
   }
 }

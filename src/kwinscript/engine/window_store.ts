@@ -42,6 +42,8 @@ export interface WindowStore {
    */
   allWindowsOn(surf: DriverSurface): EngineWindow[];
 
+  // allWindowsIn(groupId: number);
+
   /**
    * Inserts the window at the beginning
    */
@@ -79,7 +81,10 @@ export class WindowStoreImpl implements WindowStore {
   /**
    * @param list window list to initialize from
    */
-  constructor(public list: EngineWindow[] = []) {}
+  constructor(
+    public list: EngineWindow[] = [],
+    private groupMap: number[] = []
+  ) {}
 
   public move(
     srcWin: EngineWindow,

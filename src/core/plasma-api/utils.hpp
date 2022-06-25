@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QVariant>
+#include <iostream>
 
 #define BI_PROPERTY(TYPE, NAME, SETTER_NAME)                                                                                                                   \
     Q_PROPERTY(TYPE NAME READ NAME WRITE SETTER_NAME);                                                                                                         \
@@ -42,6 +43,9 @@
         auto methodIndex = implMeta->indexOfMethod(normSignature);                                                                                             \
         auto method = implMeta->method(methodIndex);                                                                                                           \
         auto result = RET_TYPE();                                                                                                                              \
-        method.invoke(m_kwinImpl, Qt::DirectConnection, Q_RETURN_ARG(RET_TYPE, result), __VA_ARGS__);                                                          \
+        auto res = method.invoke(m_kwinImpl, Qt::DirectConnection, Q_RETURN_ARG(RET_TYPE, result), __VA_ARGS__);                                               \
         return result;                                                                                                                                         \
     }
+
+        // std::cout << "res: " << res << std::endl; \
+

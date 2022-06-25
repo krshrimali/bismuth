@@ -163,6 +163,14 @@ export interface Controller {
    */
   manageWindow(win: EngineWindow): void;
 
+  swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
+  swapSurfaceToActiveScreen(surfaceNum: number): void;
+  moveWindowToGroup(
+    groupId: number,
+    window?: EngineWindow | null
+  ): DriverSurface | null;
+  swapGroupToSurface(groupId: number, screen: number): void;
+
   /**
    * The function is called when the script is destroyed.
    * In particular, it's called by QML Component.onDestroyed
@@ -200,7 +208,7 @@ export class ControllerImpl implements Controller {
 
     this.driver.manageWindows();
 
-    this.engine.arrange();
+    // this.engine.arrange();
   }
 
   public screens(activity?: string, desktop?: number): DriverSurface[] {
@@ -248,12 +256,13 @@ export class ControllerImpl implements Controller {
   }
 
   public onSurfaceUpdate(): void {
+    this.log.log("onSurfaceUpdate");
     this.engine.arrange();
   }
 
   public onCurrentSurfaceChanged(): void {
     this.log.log(["onCurrentSurfaceChanged", { srf: this.currentSurface }]);
-    this.engine.arrange();
+    this.engine.arrange(this.currentSurface);
   }
 
   public onWindowAdded(window: EngineWindow): void {
@@ -291,7 +300,7 @@ export class ControllerImpl implements Controller {
       }
     }
 
-    this.engine.arrange();
+    // this.engine.arrange();
   }
 
   public onWindowMoveStart(window: EngineWindow): void {
@@ -299,6 +308,7 @@ export class ControllerImpl implements Controller {
   }
 
   public onWindowMove(window: EngineWindow): void {
+    // this.log.log("onWindowMove");
     /* update the window position in the layout */
     if (window.state === WindowState.Tiled) {
       const tiles = this.engine.windows.visibleTiledWindowsOn(
@@ -317,7 +327,7 @@ export class ControllerImpl implements Controller {
         } else {
           this.engine.windows.swap(window, targets[0]);
         }
-        this.engine.arrange();
+        this.engine.arrange(window.surface);
         return;
       }
     }
@@ -335,7 +345,7 @@ export class ControllerImpl implements Controller {
         if (distance > 30) {
           window.floatGeometry = window.actualGeometry;
           window.state = WindowState.Floating;
-          this.engine.arrange();
+          this.engine.arrange(window.surface);
           this.engine.showNotification("Window Untiled");
           return;
         }
@@ -355,7 +365,7 @@ export class ControllerImpl implements Controller {
 
     if (win.state === WindowState.Tiled) {
       this.engine.adjustLayout(win);
-      this.engine.arrange();
+      this.engine.arrange(win.surface);
     }
   }
 
@@ -366,24 +376,26 @@ export class ControllerImpl implements Controller {
 
     if (win.tiled) {
       this.engine.adjustLayout(win);
-      this.engine.arrange();
+      this.engine.arrange(win.surface);
     }
   }
 
   public onWindowMaximizeChanged(
-    _window: EngineWindow,
+    window: EngineWindow,
     _maximized: boolean
   ): void {
-    this.engine.arrange();
+    this.log.log(`onWindowMaximizeChanged ${_maximized}`);
+    this.engine.arrange(window.surface);
   }
 
   public onWindowGeometryChanged(window: EngineWindow): void {
     this.log.log(["onWindowGeometryChanged", { window }]);
   }
 
-  public onWindowScreenChanged(_window: EngineWindow): void {
+  public onWindowScreenChanged(window: EngineWindow): void {
     //TODO only arrange the surface the window came from and went to
-    this.engine.arrange();
+    this.log.log("onWindowScreenChanged");
+    this.moveWindowToSurface(window, window.surface);
   }
 
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack
@@ -393,10 +405,19 @@ export class ControllerImpl implements Controller {
       this.log.log(["onWindowChanged", { window, comment }]);
 
       if (comment === "unminimized") {
+        this.log.log(
+          `unminimizing on group ${window.window.group} screen ${window.screen} ${window}`
+        );
         this.currentWindow = window;
       }
 
-      this.engine.arrange();
+      if (comment === "minimized") {
+        this.log.log(
+          `minimizing on group ${window.window.group} screen ${window.screen} ${window}`
+        );
+      }
+
+      this.engine.arrange(window.surface);
     }
   }
 
@@ -421,7 +442,19 @@ export class ControllerImpl implements Controller {
       win.state = win.statePreviouslyAskedToChangeTo;
     }
 
-    this.engine.arrange();
+    this.engine.arrange(win.surface);
+  }
+
+  public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
+    // this.currentSurface.currentGroup = groupId;
+    surface.screen = screen;
+  }
+
+  public swapSurfaceToActiveScreen(surfaceNum: number): void {
+    this.log.log(
+      `swapping surface ${surfaceNum} to screen ${this.currentSurface.screen}`
+    );
+    this.engine.swapSurfaceToActiveScreen(surfaceNum);
   }
 
   public manageWindow(win: EngineWindow): void {
@@ -432,8 +465,49 @@ export class ControllerImpl implements Controller {
     window: EngineWindow,
     surface: DriverSurface
   ): void {
-    this.driver.moveWindowToSurface(window, surface);
-    this.engine.arrange();
+    // this.driver.moveWindowToSurface(window, surface);
+    // this.engine.arrange();
+    // this.engine.moveWindowToSurface(window, surface);
+    // this.driver.moveWindowToGroup(window, surface);
+
+    const oldSurface = this.driver.moveWindowToGroup(surface.group, window);
+    if (oldSurface) {
+      this.engine.arrange(oldSurface);
+    }
+    this.engine.arrange(surface);
+  }
+
+  public moveWindowToGroup(
+    groupId: number,
+    window?: EngineWindow | null
+  ): DriverSurface | null {
+    if (!window) {
+      window = this.currentWindow;
+    }
+    if (!window) {
+      return null;
+    }
+
+    return this.driver.moveWindowToGroup(groupId, window);
+  }
+
+  public swapGroupToSurface(groupId: number, screen: number): void {
+    // hide windows currently on this surface
+    for (const win of this.engine.windows.visibleWindowsOn(
+      this.screens()[screen]
+    )) {
+      win.window.hidden = true;
+    }
+
+    // swap windows
+    this.driver.swapGroupToSurface(groupId, screen);
+
+    // unhide windows now on this surface
+    for (const win of this.engine.windows.visibleWindowsOn(
+      this.screens()[screen]
+    )) {
+      win.window.hidden = false;
+    }
   }
 
   public drop(): void {
@@ -470,6 +544,26 @@ export class ControllerImpl implements Controller {
       new Action.DecreaseMasterAreaWindowCount(this.engine, this.log),
       new Action.IncreaseLayoutMasterAreaSize(this.engine, this.log),
       new Action.DecreaseLayoutMasterAreaSize(this.engine, this.log),
+
+      new Action.SwapGroup1ToSurface(this.engine, this.log),
+      new Action.SwapGroup2ToSurface(this.engine, this.log),
+      new Action.SwapGroup3ToSurface(this.engine, this.log),
+      new Action.SwapGroup4ToSurface(this.engine, this.log),
+      new Action.SwapGroup5ToSurface(this.engine, this.log),
+      new Action.SwapGroup6ToSurface(this.engine, this.log),
+      new Action.SwapGroup7ToSurface(this.engine, this.log),
+      new Action.SwapGroup8ToSurface(this.engine, this.log),
+      new Action.SwapGroup9ToSurface(this.engine, this.log),
+
+      new Action.ChangeWindowToGroup1(this.engine, this.log),
+      new Action.ChangeWindowToGroup2(this.engine, this.log),
+      new Action.ChangeWindowToGroup3(this.engine, this.log),
+      new Action.ChangeWindowToGroup4(this.engine, this.log),
+      new Action.ChangeWindowToGroup5(this.engine, this.log),
+      new Action.ChangeWindowToGroup6(this.engine, this.log),
+      new Action.ChangeWindowToGroup7(this.engine, this.log),
+      new Action.ChangeWindowToGroup8(this.engine, this.log),
+      new Action.ChangeWindowToGroup9(this.engine, this.log),
 
       new Action.ToggleActiveWindowFloating(this.engine, this.log),
       new Action.PushActiveWindowIntoMasterAreaFront(this.engine, this.log),
