@@ -215,7 +215,8 @@ export class DriverImpl implements Driver {
     }
     const numDesktops = this.proxy.workspace().desktops;
 
-    const customScreenOrder = [1, 3, 2, 0, 4, 5, 6, 7, 8, 9];
+    // const customScreenOrder = [1, 3, 2, 0, 4, 5, 6, 7, 8, 9];
+    const customScreenOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     const numScreens = this.proxy.workspace().numScreens;
     let groupId = 1;
