@@ -303,7 +303,7 @@ export class ControllerImpl implements Controller {
     if (this.currentDesktop == this.proxy.workspace().desktops) {
       this.log.log(`tried to access hidden desktop ${this.currentDesktop}`);
       this.showNotification(
-        `Desktop ${this.currentDesktop} is forbidden`,
+        `Don't use desktop ${this.currentDesktop}`,
         undefined,
         undefined,
         -1
