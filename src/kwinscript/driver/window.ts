@@ -395,8 +395,8 @@ export class DriverWindowImpl implements DriverWindow {
         const area = Rect.fromQRect(
           this.proxy.workspace().clientArea(
             0, // This is placement area
-            this.client.screen,
-            this.proxy.workspace().currentDesktop
+            this.surface.screen,
+            this.client.desktop
           )
         );
         if (!area.includes(geometry)) {
