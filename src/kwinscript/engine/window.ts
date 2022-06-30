@@ -3,12 +3,13 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DriverWindow } from "../driver/window";
+import { DriverWindow, DriverWindowImpl } from "../driver/window";
 import { DriverSurface } from "../driver/surface";
 
 import { Config } from "../config";
 import { Log } from "../util/log";
 import { Rect, RectDelta } from "../util/rect";
+import { TSProxy } from "../extern/proxy";
 
 export enum WindowState {
   /**
@@ -21,6 +22,7 @@ export enum WindowState {
    */
   NativeFullscreen,
   NativeMaximized,
+  NativeMinimized,
 
   /**
    * Script-internal state
@@ -30,6 +32,11 @@ export enum WindowState {
   Tiled,
   TiledAfloat,
   Undecided,
+}
+
+export interface WindowConfig {
+  group: number;
+  minimized: boolean;
 }
 
 /**
@@ -252,6 +259,9 @@ export class EngineWindowImpl implements EngineWindow {
     if (this.window.maximized) {
       return WindowState.NativeMaximized;
     }
+    if (this.window.minimized) {
+      return WindowState.NativeMinimized;
+    }
 
     return this.internalState;
   }
@@ -292,7 +302,7 @@ export class EngineWindowImpl implements EngineWindow {
 
   public set surface(srf: DriverSurface | null) {
     this.window.surface = srf;
-    this.window.group = srf ? srf.group : -1;
+    // this.window.group = srf ? srf.group : 0;
 
     // this._group = srf.currentGroup;
   }
@@ -338,7 +348,12 @@ export class EngineWindowImpl implements EngineWindow {
 
   private config: Config;
 
-  constructor(window: DriverWindow, config: Config, private log: Log) {
+  constructor(
+    window: DriverWindow,
+    config: Config,
+    private log: Log,
+    private proxy: TSProxy
+  ) {
     this.config = config;
 
     this.id = window.id;
@@ -354,6 +369,17 @@ export class EngineWindowImpl implements EngineWindow {
     this.internalState = WindowState.Unmanaged;
     this.shouldCommitFloat = this.shouldFloat;
     this.weightMap = {};
+
+    const w = JSON.parse(
+      this.proxy.getWindowState(
+        (this.window as DriverWindowImpl).client.windowId.toString()
+      )
+    ) as WindowConfig;
+    if (w.minimized) {
+      this.log.log(`found minimized window ${this}`);
+      this.minimized = true;
+      this.state = WindowState.NativeMinimized;
+    }
   }
 
   public commit(): void {
@@ -362,7 +388,7 @@ export class EngineWindowImpl implements EngineWindow {
     }
 
     const state = this.state;
-    // this.log.log(["Window#commit", { state: WindowState[state] }]);
+    this.log.log(`commit state: ${state} ${this}`);
     switch (state) {
       case WindowState.NativeMaximized:
         this.window.commit(
@@ -393,6 +419,7 @@ export class EngineWindowImpl implements EngineWindow {
         break;
 
       case WindowState.Tiled:
+      case WindowState.NativeMinimized:
         this.window.commit(this.geometry, this.config.noTileBorder, false);
         break;
 

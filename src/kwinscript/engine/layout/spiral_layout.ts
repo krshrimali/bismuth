@@ -5,7 +5,7 @@
 
 import { HalfSplitLayoutPart } from "./layout_part";
 import { FillLayoutPart } from "./layout_part";
-import { WindowsLayout } from ".";
+import { LayoutState, WindowsLayout } from ".";
 
 import { WindowState, EngineWindow } from "../window";
 
@@ -14,11 +14,8 @@ import { Config } from "../../config";
 import { Controller } from "../../controller";
 import { Engine } from "..";
 
-import {
-  Action,
-  Rotate,
-  RotateReverse,
-} from "../../controller/action";
+import { Action, Rotate, RotateReverse } from "../../controller/action";
+import { TSProxy } from "../../extern/proxy";
 
 export type SpiralLayoutPart = HalfSplitLayoutPart<
   FillLayoutPart,
@@ -36,15 +33,23 @@ export default class SpiralLayout implements WindowsLayout {
 
   private config: Config;
 
-  constructor(config: Config) {
+  private state: LayoutState;
+
+  constructor(
+    config: Config,
+    private proxy: TSProxy,
+    public readonly uid: string
+  ) {
     this.config = config;
+
+    this.state = new LayoutState(this.proxy, uid, this.classID);
 
     this.depth = 1;
     this.parts = new HalfSplitLayoutPart(
       new FillLayoutPart(),
       new FillLayoutPart()
     );
-    this.parts.angle = 0;
+    this.parts.angle = this.state.rotation;
     this.parts.gap = this.config.tileLayoutGap;
   }
 
@@ -116,7 +121,11 @@ export default class SpiralLayout implements WindowsLayout {
   }
 
   private rotate(angle: 90 | 180 | -90 | -180): void {
-    this.parts.angle = (this.parts.angle + angle) % 360 as 0 | 90 | 180 | 270;
+    if (angle < 0) {
+      angle += 360;
+    }
+    this.parts.angle = ((this.parts.angle + angle) % 360) as 0 | 90 | 180 | 270;
+    this.state.rotation = this.parts.angle;
   }
 
   public executeAction(engine: Engine, action: Action): void {

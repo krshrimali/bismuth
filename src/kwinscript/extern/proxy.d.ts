@@ -9,4 +9,13 @@ export interface TSProxy {
   jsConfig(): Config;
   registerShortcut(data: Action): void;
   log(value: any): void;
+  getWindowState(windowId: string): string;
+  putWindowState(windowId: string, state: string): void;
+  getLayoutState(layoutId: string): string;
+  putLayoutState(layoutId: string, state: string): void;
+  // layoutState(stateId: string): LayoutState;
+  getWindowList(): string;
+  putWindowList(list: string): void;
+  getSurfaceGroup(desktop: number, screen: number): number;
+  setSurfaceGroup(desktop: number, screen: number, groupID: number): void;
 }

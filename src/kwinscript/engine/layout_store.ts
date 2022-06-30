@@ -5,7 +5,7 @@
 
 import FloatingLayout from "./layout/floating_layout";
 
-import { WindowsLayout } from "./layout";
+import { LayoutState, State, WindowsLayout } from "./layout";
 
 import { DriverSurface } from "../driver/surface";
 
@@ -19,6 +19,7 @@ import SpiralLayout from "./layout/spiral_layout";
 import SpreadLayout from "./layout/spread_layout";
 import StairLayout from "./layout/stair_layout";
 import ThreeColumnLayout from "./layout/three_column_layout";
+import { TSProxy } from "../extern/proxy";
 
 export class LayoutStoreEntry {
   public get currentLayout(): WindowsLayout {
@@ -32,11 +33,19 @@ export class LayoutStoreEntry {
 
   private config: Config;
 
-  constructor(config: Config) {
+  constructor(config: Config, private proxy: TSProxy, private uid: string) {
     this.config = config;
     this.currentIndex = 0;
-    this.currentID = this.config.layoutOrder[0];
     this.layouts = {};
+
+    const state = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+
+    if (state.classID) {
+      this.currentID = state.classID;
+    } else {
+      this.currentID = this.config.layoutOrder[0];
+    }
+
     this.previousID = this.currentID;
 
     this.loadLayout(this.currentID);
@@ -76,18 +85,24 @@ export class LayoutStoreEntry {
   private loadLayout(ID: string): WindowsLayout {
     let layout = this.layouts[ID];
     if (!layout) {
-      layout = this.layouts[ID] = this.createLayoutFromId(ID);
+      // const state = JSON.parse(this.proxy.getLayoutState(this.surfId)) as State;
+      const state = null;
+      if (state) {
+        // layout = this.layouts[ID] = this.createLayoutFromId(state.class);
+      } else {
+        layout = this.layouts[ID] = this.createLayoutFromId(ID);
+      }
     }
     return layout;
   }
 
-  private createLayoutFromId(id: string): WindowsLayout {
+  private createLayoutFromId(id: string, state?: LayoutState): WindowsLayout {
     if (id == MonocleLayout.id) {
       return new MonocleLayout(this.config);
     } else if (id == QuarterLayout.id) {
       return new QuarterLayout(this.config);
     } else if (id == SpiralLayout.id) {
-      return new SpiralLayout(this.config);
+      return new SpiralLayout(this.config, this.proxy, this.uid);
     } else if (id == SpreadLayout.id) {
       return new SpreadLayout();
     } else if (id == StairLayout.id) {
@@ -95,7 +110,7 @@ export class LayoutStoreEntry {
     } else if (id == ThreeColumnLayout.id) {
       return new ThreeColumnLayout(this.config);
     } else if (id == TileLayout.id) {
-      return new TileLayout(this.config);
+      return new TileLayout(this.config, this.proxy, this.uid);
     } else {
       return new FloatingLayout();
     }
@@ -105,21 +120,21 @@ export class LayoutStoreEntry {
 export default class LayoutStore {
   private store: { [key: string]: LayoutStoreEntry };
 
-  constructor(private config: Config) {
+  constructor(private config: Config, private proxy: TSProxy) {
     this.store = {};
   }
 
   public getCurrentLayout(srf: DriverSurface): WindowsLayout {
     return srf.ignore
       ? FloatingLayout.instance
-      : this.getEntry(srf.id).currentLayout;
+      : this.getEntry(`${srf.screen}:${srf.group}`).currentLayout;
   }
 
   public cycleLayout(srf: DriverSurface, step: 1 | -1): WindowsLayout | null {
     if (srf.ignore) {
       return null;
     }
-    return this.getEntry(srf.id).cycleLayout(step);
+    return this.getEntry(`${srf.screen}:${srf.group}`).cycleLayout(step);
   }
 
   public toggleLayout(
@@ -129,12 +144,14 @@ export default class LayoutStore {
     if (surf.ignore) {
       return null;
     }
-    return this.getEntry(surf.id).toggleLayout(layoutClassID);
+    return this.getEntry(`${surf.screen}:${surf.group}`).toggleLayout(
+      layoutClassID
+    );
   }
 
   private getEntry(key: string): LayoutStoreEntry {
     if (!this.store[key]) {
-      this.store[key] = new LayoutStoreEntry(this.config);
+      this.store[key] = new LayoutStoreEntry(this.config, this.proxy, key);
     }
     return this.store[key];
   }

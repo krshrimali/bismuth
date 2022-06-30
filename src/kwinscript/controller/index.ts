@@ -98,7 +98,10 @@ export interface Controller {
    * React to window changing screens
    * @param window the window whose screen has changed
    */
-  onWindowScreenChanged(window: EngineWindow): void;
+  onWindowScreenChanged(
+    window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void;
 
   onWindowActivityChanged(window: EngineWindow): void;
   onWindowDesktopChanged(window: EngineWindow): void;
@@ -173,6 +176,8 @@ export interface Controller {
    */
   manageWindow(win: EngineWindow): void;
 
+  restoreWindows(windows: EngineWindow[]): void;
+
   // swapSurfaceToScreen(surface: DriverSurface, screen: number): void;
   // swapSurfaceToActiveScreen(surfaceNum: number): void;
   moveWindowToGroup(
@@ -206,7 +211,7 @@ export class ControllerImpl implements Controller {
     private log: Log,
     private proxy: TSProxy
   ) {
-    this.engine = new EngineImpl(this, config, log);
+    this.engine = new EngineImpl(this, config, proxy, log);
     this.driver = new DriverImpl(qmlObjects, kwinApi, this, config, log, proxy);
   }
 
@@ -219,7 +224,7 @@ export class ControllerImpl implements Controller {
 
     this.driver.manageWindows();
 
-    // this.engine.arrange();
+    this.engine.arrange();
   }
 
   public screens(activity?: string, desktop?: number): DriverSurface[] {
@@ -322,6 +327,7 @@ export class ControllerImpl implements Controller {
   public onWindowAdded(window: EngineWindow): void {
     this.log.log(["onWindowAdded", { window }]);
     this.engine.manage(window);
+    this.engine.arrange(window.surface);
 
     // /* move window to next surface if the current surface is "full" */
     // if (window.tileable) {
@@ -381,6 +387,7 @@ export class ControllerImpl implements Controller {
         } else {
           this.engine.windows.swap(window, targets[0]);
         }
+        this.engine.saveWindows();
         this.engine.arrange(window.surface);
         return;
       }
@@ -446,12 +453,21 @@ export class ControllerImpl implements Controller {
     this.log.log(["onWindowGeometryChanged", { window }]);
   }
 
-  public onWindowScreenChanged(window: EngineWindow): void {
+  public onWindowScreenChanged(
+    window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void {
     this.log.log("onWindowScreenChanged");
     if (!window.surface) {
       return;
     }
-    this.moveWindowToSurface(window, window.surface);
+    // this.moveWindowToSurface(window, window.surface);
+
+    // const oldSurface = this.driver.moveWindowToGroup(surface.group, window);
+    if (oldSurface) {
+      this.engine.arrange(oldSurface);
+    }
+    this.engine.arrange(window.surface);
   }
 
   public onWindowActivityChanged(window: EngineWindow): void {
@@ -476,7 +492,7 @@ export class ControllerImpl implements Controller {
   // by itself anyway.
   public onWindowChanged(window: EngineWindow | null, comment?: string): void {
     if (window) {
-      this.log.log(["onWindowChanged", { window, comment }]);
+      this.log.log(`onWindowChanged ${comment} ${window}`);
 
       if (comment === "unminimized") {
         this.log.log(
@@ -533,6 +549,11 @@ export class ControllerImpl implements Controller {
 
   public manageWindow(win: EngineWindow): void {
     this.engine.manage(win);
+    // this.engine.arrange(win.surface);
+  }
+
+  public restoreWindows(windows: EngineWindow[]): void {
+    this.engine.restoreWindows(windows);
   }
 
   public moveWindowToSurface(

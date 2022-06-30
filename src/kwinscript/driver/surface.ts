@@ -31,7 +31,7 @@ export interface DriverSurface {
 
   screen: number;
 
-  readonly group: number;
+  group: number;
 
   /**
    * The next surface. The next surface is a virtual desktop, that comes after current one.
@@ -48,7 +48,6 @@ export class DriverSurfaceImpl implements DriverSurface {
     private _screen: number,
     public readonly activity: string,
     public readonly desktop: number,
-    public readonly group: number,
     private activityInfo: Plasma.TaskManager.ActivityInfo,
     private config: Config,
     private proxy: TSProxy,
@@ -82,7 +81,6 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.screen,
       this.activity,
       this.desktop + 1,
-      this.group + 1,
       this.activityInfo,
       this.config,
       this.proxy,
@@ -96,6 +94,22 @@ export class DriverSurfaceImpl implements DriverSurface {
 
   public get screen(): number {
     return this._screen;
+  }
+
+  public get group(): number {
+    let g = this.proxy.getSurfaceGroup(this.desktop, this.screen);
+    if (!g) {
+      const customScreenOrder = [4, 1, 3, 2, 5, 6, 7, 8, 9];
+      g = (this.desktop - 1) * 5 + customScreenOrder[this.screen];
+      this.log.log(`initialize ${this.desktop}:${this.screen} to group ${g}`);
+      this.group = g;
+    }
+    return g;
+  }
+
+  public set group(groupID: number) {
+    this.log.log(`setSurfaceGroup: ${this.desktop}:${this.screen} ${groupID}`);
+    this.proxy.setSurfaceGroup(this.desktop, this.screen, groupID);
   }
 
   public toString(): string {

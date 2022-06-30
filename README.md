@@ -8,6 +8,7 @@ My end goal is to bring the best features of tiling-centric managers into a prop
 For the most part I'm just keeping the master branch in sync with what I'm daily-driving, though there are some branches with cherry-picked features/fixes that I hope are almost ready for upstream review into bismuth.
 
 * **support changing "desktops" individually per monitor** (user feedback is desired before proposing API changes upstream to kwin)
+* persistent layouts and window positions across kwin/bismuth restarts
 * real-time layout adjustment while moving a window via mouse-drag
 * additional options for placement of new spawned windows
 * animation effect for moving windows (legitimately improves UX IMHO, giving a clue as to what went where instead of an instantaneous flash change)

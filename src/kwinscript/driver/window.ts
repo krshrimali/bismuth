@@ -10,7 +10,7 @@ import { clip, matchWords } from "../util/func";
 import { Config } from "../config";
 import { Log } from "../util/log";
 import { TSProxy } from "../extern/proxy";
-import { EngineWindow } from "../engine/window";
+import { EngineWindow, WindowConfig } from "../engine/window";
 
 /**
  * Hijack kwin's desktop module to gain the ability to hide and show windows
@@ -173,6 +173,17 @@ export class DriverWindowImpl implements DriverWindow {
 
   public set minimized(min: boolean) {
     this.client.minimized = min;
+
+    const state = JSON.parse(
+      this.proxy.getWindowState(this.client.windowId.toString())
+    ) as WindowConfig;
+
+    state.minimized = min;
+
+    this.proxy.putWindowState(
+      this.client.windowId.toString(),
+      JSON.stringify(state)
+    );
   }
 
   public get shaded(): boolean {
@@ -210,7 +221,6 @@ export class DriverWindowImpl implements DriverWindow {
       this.screen,
       activity,
       desktop,
-      this.group,
       this.qml.activityInfo,
       this.config,
       this.proxy,
@@ -237,6 +247,12 @@ export class DriverWindowImpl implements DriverWindow {
 
     this._screen = surfImpl.screen;
 
+    this.log.log(
+      `window setting surface ${surfImpl.screen} group ${surf.group}`
+    );
+
+    this.group = surf.group;
+
     // if (surf.screen < 5) {
     //   this.hidden = false;
     // } else {
@@ -251,11 +267,31 @@ export class DriverWindowImpl implements DriverWindow {
     // if (!this._group) {
     //   return this.surface.group;
     // }
-    return this._group;
+
+    // if (this.surface) {
+    //   return this.surface.group;
+    // }
+
+    const state = JSON.parse(
+      this.proxy.getWindowState(this.client.windowId.toString())
+    ) as WindowConfig;
+    const g = state.group;
+    // this.log.log(`got window group ${g}`);
+    return g;
+    // return this._group;
   }
 
   public set group(groupId: number) {
-    this._group = groupId;
+    const state = JSON.parse(
+      this.proxy.getWindowState(this.client.windowId.toString())
+    ) as WindowConfig;
+
+    state.group = groupId;
+
+    this.proxy.putWindowState(
+      this.client.windowId.toString(),
+      JSON.stringify(state)
+    );
   }
 
   public get hidden(): boolean {
@@ -319,6 +355,13 @@ export class DriverWindowImpl implements DriverWindow {
       this.hidden = false;
     }
 
+    if (!this.group) {
+      this.group = _group;
+      this.log.log(`resetting to group ${_group}`);
+    } else {
+      this.log.log(`using existing group ${this.group}`);
+    }
+
     // if (this.screen < 5) {
     //   this.hidden = false;
     // } else {
@@ -359,9 +402,13 @@ export class DriverWindowImpl implements DriverWindow {
 
     this.hidden = false;
 
-    if (this.client.move || this.client.resize || this.hidden) {
+    if (this.client.move || this.client.resize) {
       return;
     }
+
+    // if (!this.screen) {
+    //   return;
+    // }
 
     if (noBorder !== undefined) {
       if (!this.noBorderManaged && noBorder) {
@@ -410,7 +457,7 @@ export class DriverWindowImpl implements DriverWindow {
       if (this.client.frameGeometry != geometry.toQRect()) {
         this.client.frameGeometry = geometry.toQRect();
       } else {
-        // this.log.log("no update");
+        this.log.log("no update");
       }
     }
   }

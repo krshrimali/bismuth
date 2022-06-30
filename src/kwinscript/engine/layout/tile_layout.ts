@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { WindowsLayout } from ".";
+import { LayoutState, WindowsLayout } from ".";
 import {
   RotateLayoutPart,
   HalfSplitLayoutPart,
@@ -28,6 +28,7 @@ import { Rect, RectDelta } from "../../util/rect";
 import { Config } from "../../config";
 import { Controller } from "../../controller";
 import { Engine } from "..";
+import { TSProxy } from "../../extern/proxy";
 
 export default class TileLayout implements WindowsLayout {
   public static readonly MIN_MASTER_RATIO = 0.2;
@@ -63,8 +64,15 @@ export default class TileLayout implements WindowsLayout {
 
   private config: Config;
 
-  constructor(config: Config) {
+  private state: LayoutState;
+
+  constructor(
+    config: Config,
+    private proxy: TSProxy,
+    public readonly uid: string
+  ) {
     this.config = config;
+    this.state = new LayoutState(this.proxy, uid, this.classID);
 
     this.parts = new RotateLayoutPart(
       new HalfSplitLayoutPart(
@@ -78,6 +86,9 @@ export default class TileLayout implements WindowsLayout {
       masterPart.primary.inner.gap =
       masterPart.secondary.gap =
         this.config.tileLayoutGap;
+
+    this.parts.angle = this.state.rotation;
+    this.numMaster = this.state.numMasterTiles;
   }
 
   public adjust(
@@ -102,7 +113,7 @@ export default class TileLayout implements WindowsLayout {
   }
 
   public clone(): WindowsLayout {
-    const other = new TileLayout(this.config);
+    const other = new TileLayout(this.config, this.proxy, this.uid);
     other.masterRatio = this.masterRatio;
     other.numMaster = this.numMaster;
     return other;
@@ -125,17 +136,21 @@ export default class TileLayout implements WindowsLayout {
       // TODO: define arbitrary constant
       if (this.numMaster < 10) {
         this.numMaster += 1;
+        this.state.numMasterTiles = this.numMaster;
       }
       engine.showLayoutNotification();
     } else if (action instanceof DecreaseMasterAreaWindowCount) {
       if (this.numMaster > 0) {
         this.numMaster -= 1;
+        this.state.numMasterTiles = this.numMaster;
       }
       engine.showLayoutNotification();
     } else if (action instanceof Rotate) {
       this.parts.rotate(90);
+      this.state.rotation = this.parts.angle;
     } else if (action instanceof RotateReverse) {
       this.parts.rotate(-90);
+      this.state.rotation = this.parts.angle;
     } else if (action instanceof RotatePart) {
       this.parts.inner.primary.rotate(90);
     } else {

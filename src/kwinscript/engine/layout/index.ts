@@ -10,6 +10,7 @@ import { Controller } from "../../controller";
 import { Action } from "../../controller/action";
 
 import { Rect, RectDelta } from "../../util/rect";
+import { TSProxy } from "../../extern/proxy";
 
 export abstract class WindowsLayout {
   /* read-only */
@@ -53,4 +54,56 @@ export abstract class WindowsLayout {
   executeAction?(engine: Engine, action: Action): void;
 
   abstract toString(): string;
+}
+
+export interface State {
+  classID: string;
+  numMasterTiles: number;
+  rotation: 0 | 90 | 180 | 270;
+}
+
+export class LayoutState {
+  constructor(
+    private proxy: TSProxy,
+    private readonly uid: string,
+    private readonly classID: string
+  ) {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    vars.classID = classID;
+    this.proxy.putLayoutState(this.uid, JSON.stringify(vars));
+  }
+
+  private toJSON(): string {
+    const vars: { [rotation: string]: number } = {};
+    vars.rotation = this.rotation;
+    return JSON.stringify(vars);
+  }
+
+  public set rotation(angle: 0 | 90 | 180 | 270) {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    vars.rotation = angle;
+    this.proxy.putLayoutState(this.uid, JSON.stringify(vars));
+  }
+
+  public get rotation(): 0 | 90 | 180 | 270 {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    if (vars.rotation == undefined) {
+      return 0;
+    }
+    return vars.rotation;
+  }
+
+  public set numMasterTiles(num: number) {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    vars.numMasterTiles = num;
+    this.proxy.putLayoutState(this.uid, JSON.stringify(vars));
+  }
+
+  public get numMasterTiles(): number {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    if (vars.numMasterTiles == undefined) {
+      return 1;
+    }
+    return vars.numMasterTiles;
+  }
 }

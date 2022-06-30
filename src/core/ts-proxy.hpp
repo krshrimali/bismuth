@@ -25,6 +25,18 @@ public:
      */
     Q_INVOKABLE QJSValue jsConfig();
 
+    Q_INVOKABLE QString getWindowState(const QString);
+    Q_INVOKABLE void putWindowState(const QString, const QString);
+
+    Q_INVOKABLE QString getLayoutState(const QString);
+    Q_INVOKABLE void putLayoutState(const QString, const QString);
+
+    Q_INVOKABLE QString getWindowList();
+    Q_INVOKABLE void putWindowList(const QString);
+
+    Q_INVOKABLE int getSurfaceGroup(int desktop, int screen);
+    Q_INVOKABLE void setSurfaceGroup(int desktop, int screen, int groupID);
+
     /**
      * Returns the workspace instance
      */

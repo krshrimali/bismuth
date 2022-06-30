@@ -19,6 +19,7 @@ import { Config } from "../config";
 import { Log } from "../util/log";
 import { WindowsLayout } from "./layout";
 import { DriverWindowImpl } from "../driver/window";
+import { TSProxy } from "../extern/proxy";
 
 export type Direction = "up" | "down" | "left" | "right";
 export type CompassDirection = "east" | "west" | "south" | "north";
@@ -52,6 +53,10 @@ export interface Engine {
    * Unregister the given window from WM.
    */
   unmanage(window: EngineWindow): void;
+
+  restoreWindows(windows: EngineWindow[]): void;
+
+  saveWindows(): void;
 
   /**
    * Adjust layout based on the change in size of a tile.
@@ -202,10 +207,11 @@ export class EngineImpl implements Engine {
   constructor(
     private controller: Controller,
     private config: Config,
+    private proxy: TSProxy,
     private log: Log
   ) {
-    this.layouts = new LayoutStore(this.config);
-    this.windows = new WindowStoreImpl();
+    this.layouts = new LayoutStore(this.config, this.proxy);
+    this.windows = new WindowStoreImpl(config, log);
 
     // set initial groupId for each surface to its screen number
     this.groupMap = [];
@@ -450,12 +456,20 @@ export class EngineImpl implements Engine {
    */
   private commitArrangement(surface: DriverSurface): void {
     // Commit window assigned properties
-    const visibleWindows = this.windows.visibleWindowsOn(surface);
+    const visibleWindows = this.windows.allWindowsOn(surface);
 
-    visibleWindows.forEach((win: EngineWindow) => {
+    for (const win of visibleWindows) {
       this.log.log(`committing: ${win}`);
-      visibleWindows.forEach((win: EngineWindow) => win.commit());
-    });
+      if ((win.window as DriverWindowImpl).client.screen != surface.screen) {
+        this.log.log(`correcting window to screen ${surface.screen}`);
+        win.surface = surface;
+        if (win.state == WindowState.NativeMinimized) {
+          this.log.log(`correcting minimized window ${win}`);
+          win.geometry = surface.workingArea;
+        }
+      }
+      win.commit();
+    }
   }
 
   public currentLayoutOnCurrentSurface(): WindowsLayout {
@@ -494,20 +508,57 @@ export class EngineImpl implements Engine {
         /* newWindowSpawnLocation == "end" or "floating" */
         this.windows.push(window);
       }
+
+      this.saveWindows();
+
       if (!window.surface) {
         return;
       }
-      this.arrangeScreen(window.surface);
-      this.commitArrangement(window.surface);
+      // this.arrangeScreen(window.surface);
+      // this.commitArrangement(window.surface);
     }
   }
 
   public unmanage(window: EngineWindow): void {
     const surface = window.window.surface;
     this.windows.remove(window);
+    // this.saveWindows();
     if (surface) {
       this.arrange(surface);
     }
+  }
+
+  public restoreWindows(windows: EngineWindow[]): void {
+    const cachedList = this.proxy.getWindowList();
+    const list = JSON.parse(cachedList) as string[];
+    for (const id of list) {
+      for (const window of windows) {
+        if (
+          (window.window as DriverWindowImpl).client.windowId.toString() ==
+            id &&
+          !window.shouldIgnore
+        ) {
+          this.log.log(`restoring window position for: ${window}`);
+          window.state = WindowState.Undecided;
+          this.windows.push(window);
+          break;
+        }
+      }
+    }
+    for (const window of windows) {
+      if (!this.windows.contains(window) && !window.shouldIgnore) {
+        window.state = WindowState.Undecided;
+        this.windows.push(window);
+      }
+    }
+  }
+
+  public saveWindows(): void {
+    const list: string[] = [];
+    for (const window of (this.windows as WindowStoreImpl).list) {
+      list.push((window.window as DriverWindowImpl).client.windowId.toString());
+    }
+    this.proxy.putWindowList(JSON.stringify(list));
   }
 
   /**
@@ -591,6 +642,7 @@ export class EngineImpl implements Engine {
     const dstWin = visibles[vdst];
 
     this.windows.move(window, dstWin);
+    this.saveWindows();
   }
 
   /**
@@ -625,6 +677,7 @@ export class EngineImpl implements Engine {
       if (iBefore == iAfter) {
         this.windows.swap(window, neighbor);
       }
+      this.saveWindows();
       return;
     } else if (!this.config.moveBetweenSurfaces) {
       return;
@@ -657,6 +710,7 @@ export class EngineImpl implements Engine {
       }
 
       this.windows.move(window, closestSlot);
+      this.saveWindows();
     } else if (closestSurface) {
       this.log.log(`moving to empty screen ${closestSurface}`);
       this.controller.moveWindowToSurface(window, closestSurface);
@@ -818,6 +872,7 @@ export class EngineImpl implements Engine {
 
   public setMaster(window: EngineWindow): void {
     this.windows.putWindowToMaster(window);
+    this.saveWindows();
     if (window.window.surface) {
       this.arrange(window.window.surface);
     }
