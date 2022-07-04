@@ -57,6 +57,8 @@ export interface DriverWindow {
    */
   readonly screen: number | null;
 
+  readonly desktop: number;
+
   /**
    * Whether the window is focused right now
    */
@@ -166,6 +168,10 @@ export class DriverWindowImpl implements DriverWindow {
       this.log.log(`got invalid screen ${this._screen}`);
     }
     return this._screen;
+  }
+
+  public get desktop(): number {
+    return this.client.desktop;
   }
 
   public get minimized(): boolean {

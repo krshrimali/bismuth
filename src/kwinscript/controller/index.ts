@@ -472,7 +472,7 @@ export class ControllerImpl implements Controller {
 
   public onWindowActivityChanged(window: EngineWindow): void {
     this.log.log("onWindowActivityChanged");
-    if (!window.screen) {
+    if (window.screen == null) {
       return;
     }
     this.engine.arrange(this.screens()[window.screen]);
@@ -481,11 +481,29 @@ export class ControllerImpl implements Controller {
 
   public onWindowDesktopChanged(window: EngineWindow): void {
     this.log.log("onWindowDesktopChanged");
-    if (!window.screen) {
-      return;
+
+    this.log.log(`kwin moved window to desktop ${window.desktop}`);
+
+    // find what surface holds the group the window came from, if any
+    let oldSurface = null;
+    for (const surf of this.screens()) {
+      if (surf.group != window.window.group) {
+        continue;
+      }
+      oldSurface = surf;
+      break;
     }
-    this.engine.arrange(this.screens()[window.screen]);
-    // this.moveWindowToSurface(window, window.surface);
+
+    // move window to whatever group is on the monitor the window went to
+    const screen = this.currentSurface.screen;
+    const newSurface = this.screens(this.currentActivity, window.desktop)[
+      screen
+    ];
+    window.window.group = newSurface.group;
+
+    this.log.log(`moved window to group ${newSurface.group}`);
+
+    this.engine.arrange(oldSurface);
   }
 
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack

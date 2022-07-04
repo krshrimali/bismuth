@@ -110,6 +110,8 @@ export interface EngineWindow {
    */
   readonly screen: number | null;
 
+  readonly desktop: number;
+
   /**
    * Whether the window is minimized
    */
@@ -209,6 +211,10 @@ export class EngineWindowImpl implements EngineWindow {
 
   public get screen(): number | null {
     return this.window.screen;
+  }
+
+  public get desktop(): number {
+    return this.window.desktop;
   }
 
   public get minimized(): boolean {

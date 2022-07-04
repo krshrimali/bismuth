@@ -689,14 +689,24 @@ export class DriverImpl implements Driver {
 
     this.connect(client.desktopChanged, () => {
       // ignore hijacked desktop ids
-      if (client.desktop == -1 || client.desktop == 3) {
-        this.log.log(`ignoring desktop ${client.desktop}`);
+      if (
+        client.desktop == -1 ||
+        client.desktop == this.kwinApi.workspace.desktops
+      ) {
+        const badDesktop = client.desktop;
+        client.desktop = this.kwinApi.workspace.currentDesktop;
+
+        this.log.log(`ignoring window move to desktop ${client.desktop}`);
+        this.showNotification(
+          `Don't use desktop ${badDesktop}`,
+          undefined,
+          undefined,
+          this.kwinApi.workspace.activeScreen
+        );
         return;
       }
-      this.log.log(`kwin tried to move window to desktop ${client.desktop}`);
 
-      // client.desktop = this.currentDesktop;
-      // this.controller.onWindowDesktopChanged(window);
+      this.controller.onWindowDesktopChanged(window);
     });
 
     this.connect(client.shadeChanged, () => {
