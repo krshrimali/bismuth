@@ -150,6 +150,10 @@ export interface Engine {
    */
   setMaster(window: EngineWindow): void;
 
+  cycleWindowBetweenStacks(window: EngineWindow): void;
+  cycleFocusWithinStack(backwards: boolean): void;
+  moveToMasterStack(window: EngineWindow, end?: boolean): void;
+
   /**
    * Toggle float mode of window.
    */
@@ -519,18 +523,55 @@ export class EngineImpl implements Engine {
       if (!window.surface) {
         return;
       }
+
+      // Set correct window state for new windows
+      const visibleWindows = this.windows.visibleWindowsOn(window.surface);
+      visibleWindows.forEach((win: EngineWindow) => {
+        if (win.state === WindowState.Undecided) {
+          win.state = win.shouldFloat
+            ? WindowState.Floating
+            : WindowState.Tiled;
+        }
+      });
+
+      // windows created in the master stack go to the end of the stack
+      const layout = this.layouts.getCurrentLayout(window.surface);
+      if (
+        layout.numMasterTiles != undefined &&
+        this.windows.isInMasterStack(window, layout.numMasterTiles)
+      ) {
+        const masterStack = this.windows.tileableWindowsOn(window.surface);
+        const destWindow = masterStack[layout.numMasterTiles];
+
+        this.windows.move(window, destWindow);
+        layout.numMasterTiles += 1;
+        this.saveWindows();
+      }
+
       // this.arrangeScreen(window.surface);
       // this.commitArrangement(window.surface);
     }
   }
 
   public unmanage(window: EngineWindow): void {
-    const surface = window.window.surface;
+    const surf = window.window.surface;
+
+    if (surf) {
+      const layout = this.layouts.getCurrentLayout(surf);
+      if (
+        layout.numMasterTiles != undefined &&
+        this.windows.isInMasterStack(window, layout.numMasterTiles)
+      ) {
+        layout.numMasterTiles -= 1;
+      }
+    }
+
     this.windows.remove(window);
     // this.saveWindows();
-    if (surface) {
-      this.arrange(surface);
+    if (!surf) {
+      return;
     }
+    this.arrange(surf);
   }
 
   public restoreWindows(windows: EngineWindow[]): void {
@@ -902,6 +943,106 @@ export class EngineImpl implements Engine {
     this.saveWindows();
     if (window.window.surface) {
       this.arrange(window.window.surface);
+    }
+  }
+
+  public moveToMasterStack(window: EngineWindow, end = true): void {
+    if (!window || !window.surface) {
+      return;
+    }
+
+    const layout = this.layouts.getCurrentLayout(window.surface);
+    if (layout.numMasterTiles == undefined) {
+      this.showNotification("Layout isn't stackable");
+      this.setMaster(window);
+      return;
+    }
+
+    const masterStack = this.windows.visibleTileableWindowsOn(window.surface);
+    if (!masterStack.length || !layout.numMasterTiles) {
+      this.setMaster(window);
+    }
+
+    const destWindow = masterStack[layout.numMasterTiles - 1];
+    this.windows.move(window, destWindow, true);
+  }
+
+  public cycleWindowBetweenStacks(window: EngineWindow): void {
+    const win = this.controller.currentWindow;
+    if (!win || !win.surface) {
+      return;
+    }
+    const layout = this.layouts.getCurrentLayout(win.surface);
+
+    if (layout.numMasterTiles == undefined) {
+      this.showNotification("Layout isn't stackable");
+      this.setMaster(win);
+      return;
+    }
+
+    if (this.windows.isInMasterStack(win, layout.numMasterTiles)) {
+      this.showNotification("Demote from master stack");
+      layout.numMasterTiles -= 1;
+      this.moveToMasterStack(win);
+    } else {
+      this.showNotification("Promote to master stack");
+      this.moveToMasterStack(win);
+      layout.numMasterTiles += 1;
+      // (win.window as DriverWindowImpl).client.opacity = 1;
+    }
+    this.saveWindows();
+    this.arrange(win.window.surface);
+  }
+
+  public cycleFocusWithinStack(backwards = false): void {
+    const win = this.currentWindow();
+    if (!win || !win.surface) {
+      return;
+    }
+    const layout = this.layouts.getCurrentLayout(win.surface);
+
+    if (layout.numMasterTiles == undefined) {
+      return;
+    }
+    const numMasterTiles = layout.numMasterTiles;
+
+    if (
+      !backwards &&
+      this.windows.visibleTiledWindowsOn(win.surface).indexOf(win) <
+        numMasterTiles - 1
+    ) {
+      // the next window is within the master stack
+      this.log.log("next");
+      this.focusOrder(1);
+    } else if (!backwards) {
+      // the next window would be outside the master stack, so wrap around
+      this.log.log(
+        `wrap ${this.windows.visibleTiledWindowsOn(win.surface).length}`
+      );
+      const newFocus = this.windows.visibleTiledWindowsOn(win.surface)[0];
+      if (newFocus) {
+        this.log.log("ok");
+        this.controller.currentWindow = newFocus;
+      }
+    } else if (
+      backwards &&
+      this.windows.visibleTiledWindowsOn(win.surface).indexOf(win) > 0
+    ) {
+      // the next window is within the master stack
+      this.log.log("next");
+      this.focusOrder(-1);
+    } else if (backwards) {
+      // the next window would be outside the master stack, so wrap around
+      this.log.log(
+        `wrap ${this.windows.visibleTiledWindowsOn(win.surface).length}`
+      );
+      const newFocus = this.windows.visibleTiledWindowsOn(win.surface)[
+        layout.numMasterTiles - 1
+      ];
+      if (newFocus) {
+        this.log.log("ok");
+        this.controller.currentWindow = newFocus;
+      }
     }
   }
 

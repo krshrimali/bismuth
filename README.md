@@ -10,6 +10,8 @@ For the most part I'm just keeping the master branch in sync with what I'm daily
 * **support changing "desktops" individually per monitor** (user feedback is desired before proposing API changes upstream to kwin)
 * persistent layouts and window positions across kwin/bismuth restarts
 * real-time layout adjustment while moving a window via mouse-drag
+* new layout that supports tabbed/stacked windows in the master section
+
 * additional options for placement of new spawned windows
 * animation effect for moving windows (legitimately improves UX IMHO, giving a clue as to what went where instead of an instantaneous flash change)
 * support moving focus/windows across monitor boundaries

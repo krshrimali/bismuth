@@ -13,6 +13,11 @@
       <default>true</default>
     </entry>
 
+    <entry name="enableTabbedMasterLayout" type="Bool">
+      <label>Enable/disable Tabbed Master layout</label>
+      <default>true</default>
+    </entry>
+
     <entry name="enableMonocleLayout" type="Bool">
       <label>Enable/disable Monocle layout</label>
       <default>true</default>

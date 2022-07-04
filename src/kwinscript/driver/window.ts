@@ -392,8 +392,12 @@ export class DriverWindowImpl implements DriverWindow {
 
     this.hidden = false;
 
-    if (this.client.move || this.client.resize) {
+    if (this.client.resize) {
       return;
+    }
+
+    if (this.client.move) {
+      // return;
     }
 
     // if (!this.screen) {
@@ -445,7 +449,19 @@ export class DriverWindowImpl implements DriverWindow {
         }
       }
       if (this.client.frameGeometry != geometry.toQRect()) {
-        this.client.frameGeometry = geometry.toQRect();
+        if (!this.client.move) {
+          this.client.frameGeometry = geometry.toQRect();
+        } else {
+          // // it would be nice to keep the window centered on the cursor as it
+          // // resizes, but this doesn't work
+          // const xDelta = this.client.frameGeometry.width - geometry.width;
+          // const yDelta = this.client.frameGeometry.height - geometry.height;
+          // this.client.frameGeometry.width += xDelta / 2;
+          // this.client.frameGeometry.height += yDelta / 2;
+
+          this.client.frameGeometry.width = geometry.width;
+          this.client.frameGeometry.height = geometry.height;
+        }
       } else {
         this.log.log("no update");
       }

@@ -168,6 +168,18 @@ void Controller::registerShortcuts()
         qDebug(Bi) << "Push Active Window to Master Area Triggered!";
     });
 
+    addShortcut("move_window_to_next_stack", "Promote/Demote Window to/from Master Stack", "Meta+G", [=]() {
+        qDebug(Bi) << "Promote/Demote Window to/from Master Stack Triggered!";
+    });
+
+    addShortcut("focus_next_in_stack", "Focus Next in Current Stack", "Meta+Tab", [=]() {
+        qDebug(Bi) << "Focus Next in Current Stack Triggered!";
+    });
+
+    addShortcut("focus_prev_in_stack", "Focus Previous in Current Stack", "Meta+Shift+Tab", [=]() {
+        qDebug(Bi) << "Focus Previous in Current Stack Triggered!";
+    });
+
     addShortcut("next_layout", "Switch to the Next Layout", "Meta+\\", [=]() {
         qDebug(Bi) << "Switch to the Next Layout Triggered!";
     });
@@ -177,6 +189,9 @@ void Controller::registerShortcuts()
 
     addShortcut("toggle_tile_layout", "Toggle Tile Layout", "Meta+T", [=]() {
         qDebug(Bi) << "Toggle Tile Layout Triggered!";
+    });
+    addShortcut("toggle_tabbed_master_layout", "Toggle Tabbed Master Layout", "Meta+Y", [=]() {
+        qDebug(Bi) << "Toggle Tabbed Master Layout Triggered!";
     });
     addShortcut("toggle_monocle_layout", "Toggle Monocle Layout", "Meta+M", [=]() {
         qDebug(Bi) << "Toggle Monocle Layout Triggered!";

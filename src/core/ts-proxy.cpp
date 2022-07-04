@@ -48,6 +48,7 @@ QJSValue TSProxy::jsConfig()
 
     // HACK: We have to hardcode layoutIds here for now
     addLayout("enableTileLayout", "TileLayout");
+    addLayout("enableTabbedMasterLayout", "TabbedMasterLayout");
     addLayout("enableMonocleLayout", "MonocleLayout");
     addLayout("enableThreeColumnLayout", "ThreeColumnLayout");
     addLayout("enableSpreadLayout", "SpreadLayout");

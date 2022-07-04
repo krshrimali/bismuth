@@ -65,6 +65,8 @@ declare namespace KWin {
     numberDesktopsChanged: QSignal;
     numberScreensChanged: QSignal;
     screenResized: QSignal;
+    killWindowCalled: QSignal;
+    workspaceDestroyed: QSignal;
 
     /* functions */
     clientList(): Client[];
@@ -76,6 +78,7 @@ declare namespace KWin {
     slotWindowToDesktopDown(): void;
 
     showOutline(geometry: QRect): void;
+    supportInformation(): string;
   }
 
   interface Options {
@@ -270,6 +273,16 @@ declare namespace KWin {
      */
     shade: boolean;
 
+    opacity: number;
+
+    deleted: boolean;
+
+    pid: number;
+
+    closeable: boolean;
+
+    wantsInput: boolean;
+
     /**
      * Whether the window shading state changed
      */
@@ -295,5 +308,7 @@ declare namespace KWin {
     isHidden(): boolean;
 
     clientMaximizedStateChanged: QSignal;
+
+    windowClosed: QSignal;
   }
 }

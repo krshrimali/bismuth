@@ -15,6 +15,7 @@ import { Log } from "../util/log";
 
 import * as Action from "./action";
 import { TSProxy } from "../extern/proxy";
+import { DriverWindowImpl } from "../driver/window";
 
 /**
  * Entry point of the script (apart from QML). Handles the user input (shortcuts)
@@ -48,6 +49,8 @@ export interface Controller {
    * Current screen. In other words the screen, that has focus.
    */
   currentSurface: DriverSurface;
+
+  readonly workspaceIsDestroyed: boolean;
 
   /**
    * Show a popup notification in the center of the screen.
@@ -105,6 +108,9 @@ export interface Controller {
 
   onWindowActivityChanged(window: EngineWindow): void;
   onWindowDesktopChanged(window: EngineWindow): void;
+  onWindowMinimized(window: EngineWindow): void;
+  onWindowUnminimized(window: EngineWindow): void;
+  onWorkspaceDestroyed(): void;
 
   /**
    * React to window resize operation end. The window
@@ -204,6 +210,8 @@ export interface Controller {
 export class ControllerImpl implements Controller {
   private engine: Engine;
   private driver: Driver;
+  private lastMoveTarget: EngineWindow | null;
+  public workspaceIsDestroyed: boolean;
   public constructor(
     qmlObjects: Bismuth.Qml.Main,
     kwinApi: KWin.Api,
@@ -213,6 +221,8 @@ export class ControllerImpl implements Controller {
   ) {
     this.engine = new EngineImpl(this, config, proxy, log);
     this.driver = new DriverImpl(qmlObjects, kwinApi, this, config, log, proxy);
+    this.lastMoveTarget = null;
+    this.workspaceIsDestroyed = false;
   }
 
   /**
@@ -329,6 +339,20 @@ export class ControllerImpl implements Controller {
       `onWindowAdded: desktop ${window.desktop} screen ${window.screen} group ${window.window.group} ${window}`
     );
     this.engine.manage(window);
+
+    // this.engine.arrange(window.surface);
+
+    // if (window.surface) {
+    //   const layout = this.engine.layouts.getCurrentLayout(window.surface);
+    //   if (
+    //     layout.numMasterTiles != undefined &&
+    //     this.engine.windows.isInMasterStack(window, layout.numMasterTiles)
+    //   ) {
+    //     this.log.log(`increasing master tiles`);
+    //     layout.numMasterTiles += 1;
+    //   }
+    // }
+
     this.engine.arrange(window.surface);
 
     // /* move window to next surface if the current surface is "full" */
@@ -345,6 +369,10 @@ export class ControllerImpl implements Controller {
     //     }
     //   }
     // }
+  }
+
+  public onWorkspaceDestroyed(): void {
+    this.workspaceIsDestroyed = true;
   }
 
   public onWindowRemoved(window: EngineWindow): void {
@@ -372,28 +400,70 @@ export class ControllerImpl implements Controller {
   public onWindowMove(window: EngineWindow): void {
     // this.log.log("onWindowMove");
     /* update the window position in the layout */
-    if (window.state === WindowState.Tiled) {
-      const tiles = this.engine.windows.visibleTiledWindowsOn(
-        this.currentSurface
-      );
-      const windowCenter = window.actualGeometry.center;
-
-      const targets = tiles.filter(
-        (tile) =>
-          tile !== window && tile.actualGeometry.includesPoint(windowCenter)
-      );
-
-      if (targets.length === 1) {
-        if (this.config.mouseDragInsert) {
-          this.engine.windows.move(window, targets[0]);
-        } else {
-          this.engine.windows.swap(window, targets[0]);
-        }
-        this.engine.saveWindows();
-        this.engine.arrange(window.surface);
-        return;
-      }
+    if (window.state !== WindowState.Tiled) {
+      return;
     }
+
+    const tiles = this.engine.windows.visibleTiledWindowsOn(
+      this.currentSurface
+    );
+    const windowCenter = window.actualGeometry.center;
+
+    const targets = tiles.filter(
+      (tile) =>
+        tile.actualGeometry.includesPoint(windowCenter) && tile != window
+    );
+
+    if (targets.length == 0) {
+      this.lastMoveTarget = null;
+      return;
+    }
+
+    // if (targets.length != 1) {
+    //   return;
+    // }
+
+    if (targets[0] == this.lastMoveTarget) {
+      // this.lastMoveTarget = window;
+      return;
+    }
+
+    const bottomTarget = targets[targets.length - 1];
+
+    const layout = this.engine.currentLayoutOnCurrentSurface();
+    if (
+      layout.numMasterTiles != undefined &&
+      !this.engine.windows.isInMasterStack(window, layout.numMasterTiles) &&
+      this.engine.windows.isInMasterStack(targets[0], layout.numMasterTiles)
+    ) {
+      this.engine.windows.move(window, bottomTarget, true);
+      layout.numMasterTiles += 1;
+      this.lastMoveTarget = targets[0];
+      this.log.log(`numtargets ${targets.length}`);
+    } else if (
+      layout.numMasterTiles != undefined &&
+      this.engine.windows.isInMasterStack(window, layout.numMasterTiles) &&
+      !this.engine.windows.isInMasterStack(targets[0], layout.numMasterTiles)
+    ) {
+      this.engine.windows.move(window, targets[0]);
+      layout.numMasterTiles -= 1;
+    } else if (
+      layout.numMasterTiles != undefined &&
+      this.engine.windows.isInMasterStack(bottomTarget, layout.numMasterTiles)
+    ) {
+      this.lastMoveTarget = targets[0];
+      this.engine.windows.move(window, bottomTarget, true);
+    } else if (this.config.mouseDragInsert) {
+      this.lastMoveTarget = targets[0];
+      this.engine.windows.move(window, targets[0]);
+    } else {
+      this.lastMoveTarget = targets[0];
+      this.engine.windows.swap(window, targets[0]);
+    }
+
+    // this.lastMoveTarget = targets[0];
+    this.engine.arrange(window.surface);
+    return;
   }
 
   public onWindowMoveOver(window: EngineWindow): void {
@@ -417,6 +487,7 @@ export class ControllerImpl implements Controller {
 
     /* move the window to its current position in the layout */
     window.commit();
+    this.engine.saveWindows();
   }
 
   public onWindowResizeStart(_window: EngineWindow): void {
@@ -508,6 +579,40 @@ export class ControllerImpl implements Controller {
     this.engine.arrange(oldSurface);
   }
 
+  public onWindowMinimized(window: EngineWindow): void {
+    if (!window.surface) {
+      return;
+    }
+    const layout = this.engine.layouts.getCurrentLayout(window.surface);
+
+    if (layout.numMasterTiles == undefined) {
+      this.engine.arrange(window.surface);
+      return;
+    }
+
+    if (this.engine.windows.isInMasterStack(window, layout.numMasterTiles)) {
+      layout.numMasterTiles -= 1;
+    }
+
+    this.engine.arrange(window.surface);
+  }
+
+  public onWindowUnminimized(window: EngineWindow): void {
+    if (!window.surface) {
+      return;
+    }
+    const layout = this.engine.layouts.getCurrentLayout(window.surface);
+
+    if (layout.numMasterTiles == undefined) {
+      this.engine.arrange(window.surface);
+      return;
+    }
+
+    this.engine.moveToMasterStack(window);
+    layout.numMasterTiles += 1;
+    this.engine.arrange(window.surface);
+  }
+
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack
   // by itself anyway.
   public onWindowChanged(window: EngineWindow | null, comment?: string): void {
@@ -538,6 +643,15 @@ export class ControllerImpl implements Controller {
     if (this.engine.isLayoutMonocleAndMinimizeRest()) {
       this.engine.minimizeOthers(win);
     }
+
+    // // make window fully opaque if it's part of a stack
+    // const layout = this.engine.currentLayoutOnCurrentSurface();
+    // const masterStackSize = layout.numMasterTiles;
+    // if (masterStackSize != undefined && masterStackSize > 1) {
+    //   if (this.engine.windows.isInMasterStack(win, masterStackSize)) {
+    //     (win.window as DriverWindowImpl).client.opacity = 1;
+    //   }
+    // }
   }
 
   public onWindowShadeChanged(win: EngineWindow): void {
@@ -704,10 +818,14 @@ export class ControllerImpl implements Controller {
 
       new Action.ToggleActiveWindowFloating(this.engine, this.log),
       new Action.PushActiveWindowIntoMasterAreaFront(this.engine, this.log),
+      new Action.MoveActiveWindowToNextStack(this.engine, this.log),
+      new Action.FocusNextInStack(this.engine, this.log),
+      new Action.FocusPreviousInStack(this.engine, this.log),
 
       new Action.SwitchToNextLayout(this.engine, this.log),
       new Action.SwitchToPreviousLayout(this.engine, this.log),
       new Action.ToggleTileLayout(this.engine, this.log),
+      new Action.ToggleTabbedMasterLayout(this.engine, this.log),
       new Action.ToggleMonocleLayout(this.engine, this.log),
       new Action.ToggleThreeColumnLayout(this.engine, this.log),
       new Action.ToggleStairLayout(this.engine, this.log),

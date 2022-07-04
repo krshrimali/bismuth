@@ -38,6 +38,8 @@ export abstract class WindowsLayout {
    */
   readonly capacity?: number;
 
+  numMasterTiles?: number;
+
   adjust?(
     area: Rect,
     tiles: EngineWindow[],
@@ -60,6 +62,7 @@ export interface State {
   classID: string;
   numMasterTiles: number;
   rotation: 0 | 90 | 180 | 270;
+  partRotation: 0 | 90 | 180 | 270;
 }
 
 export class LayoutState {
@@ -91,6 +94,20 @@ export class LayoutState {
       return 0;
     }
     return vars.rotation;
+  }
+
+  public set partRotation(angle: 0 | 90 | 180 | 270) {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    vars.partRotation = angle;
+    this.proxy.putLayoutState(this.uid, JSON.stringify(vars));
+  }
+
+  public get partRotation(): 0 | 90 | 180 | 270 {
+    const vars = JSON.parse(this.proxy.getLayoutState(this.uid)) as State;
+    if (vars.partRotation == undefined) {
+      return 0;
+    }
+    return vars.partRotation;
   }
 
   public set numMasterTiles(num: number) {

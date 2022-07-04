@@ -267,15 +267,6 @@ export class DriverImpl implements Driver {
           this.log,
           this.proxy
         );
-        if (!win.shouldIgnore) {
-          for (const surf of controller.screens()) {
-            if (surf.group == win.window.group) {
-              win.window.hidden = false;
-              return win;
-            }
-          }
-          win.window.hidden = true;
-        }
         return win;
       }
     );
@@ -286,7 +277,9 @@ export class DriverImpl implements Driver {
 
   public bindEvents(): void {
     const onClientAdded = (client: KWin.Client): void => {
-      this.log.log(`Client added to screen ${client.screen}: ${client}`);
+      this.log.log(
+        `Client added to desktop ${client.desktop} screen ${client.screen}: ${client}`
+      );
 
       const desktop = this.proxy.workspace().currentDesktop;
       const group = this.controller.currentSurface.group;
@@ -302,6 +295,17 @@ export class DriverImpl implements Driver {
 
       // don't use whatever group was stored in the cache
       window.window.group = group;
+
+      // hide the window if it's not currently on any monitor
+      if (!window.shouldIgnore) {
+        let surface = null;
+        for (const surf of this.controller.screens()) {
+          if (surf.group == window.window.group) {
+            surface = surf;
+          }
+        }
+        window.window.hidden = surface ? false : true;
+      }
 
       this.controller.onWindowAdded(window);
 
@@ -325,6 +329,11 @@ export class DriverImpl implements Driver {
     };
 
     const onClientRemoved = (client: KWin.Client): void => {
+      if (this.controller.workspaceIsDestroyed) {
+        return;
+      }
+
+      this.log.log(`onClientRemoved ${client.deleted} ${client.pid}`);
       const window = this.windowMap.get(client);
       if (window) {
         this.controller.onWindowRemoved(window);
@@ -332,6 +341,11 @@ export class DriverImpl implements Driver {
         this.windowMap.remove(client);
         // delete this.groupMap[client.windowId];
       }
+    };
+
+    const onWorkspaceDestroyed = (): void => {
+      this.log.log(`onWorkspaceDestroyed`);
+      this.controller.onWorkspaceDestroyed();
     };
 
     const onClientMaximizeSet = (
@@ -348,6 +362,7 @@ export class DriverImpl implements Driver {
     };
 
     const onClientMinimized = (client: KWin.Client): void => {
+      this.log.log(`onClientMinimized`);
       if (this.config.preventMinimize) {
         client.minimized = false;
         this.kwinApi.workspace.activeClient = client;
@@ -355,21 +370,25 @@ export class DriverImpl implements Driver {
       }
       const window = this.windowMap.get(client);
 
-      if (window) {
-        window.minimized = true;
+      if (!window) {
+        return;
       }
+      window.minimized = true;
 
-      this.controller.onWindowChanged(window, "minimized");
+      this.controller.onWindowMinimized(window);
     };
 
     const onClientUnminimized = (client: KWin.Client): void => {
       const window = this.windowMap.get(client);
+      this.log.log(`onClientUnminimized`);
 
-      if (window) {
-        window.minimized = false;
+      if (!window) {
+        return;
       }
 
-      this.controller.onWindowChanged(window, "unminimized");
+      window.minimized = false;
+
+      this.controller.onWindowUnminimized(window);
     };
 
     this.connect(this.kwinApi.workspace.currentActivityChanged, () =>
@@ -389,6 +408,10 @@ export class DriverImpl implements Driver {
     this.connect(this.kwinApi.workspace.clientMaximizeSet, onClientMaximizeSet);
     this.connect(this.kwinApi.workspace.clientMinimized, onClientMinimized);
     this.connect(this.kwinApi.workspace.clientUnminimized, onClientUnminimized);
+    this.connect(
+      this.kwinApi.workspace.workspaceDestroyed,
+      onWorkspaceDestroyed
+    );
   }
 
   public manageWindows(): void {
@@ -411,7 +434,11 @@ export class DriverImpl implements Driver {
   private manageWindow(client: KWin.Client): EngineWindow | null {
     const desktop = this.proxy.workspace().currentDesktop;
     // const group = this.controller.currentSurface.group;
-    const group = this.controller.screens()[client.screen].group;
+    this.log.log(
+      `find screen ${client.screen} of ${this.controller.screens().length}`
+    );
+    //FIXME I've seen this crash on restart if kwin is slow to populate the screens
+    const group = this.controller.screens()[client.screen]?.group;
 
     this.log.log(
       `initially setting client ${client.windowId} to group ${group}`
@@ -431,6 +458,17 @@ export class DriverImpl implements Driver {
     // windows that don't have a group stored in the cache go to the active group
     if (!window.window.group) {
       window.window.group = group;
+    }
+
+    // hide the window if it's not currently on any monitor
+    if (!window.shouldIgnore) {
+      let surface = null;
+      for (const surf of this.controller.screens()) {
+        if (surf.group == window.window.group) {
+          surface = surf;
+        }
+      }
+      window.window.hidden = surface ? false : true;
     }
 
     this.bindWindowEvents(window, client);
@@ -626,6 +664,17 @@ export class DriverImpl implements Driver {
   private bindWindowEvents(window: EngineWindow, client: KWin.Client): void {
     let moving = false;
     let resizing = false;
+
+    this.connect(
+      client.windowClosed,
+      (toplevel: KWin.Client, deleted: boolean) => {
+        // this.log.log(
+        //   `client.windowClosed ${client.deleted} ${
+        //     client.pid
+        //   } ${toplevel} ${deleted} ${this.kwinApi.workspace.supportInformation()}`
+        // );
+      }
+    );
 
     this.connect(client.moveResizedChanged, () => {
       this.log.log([

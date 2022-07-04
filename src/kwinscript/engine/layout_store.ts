@@ -13,6 +13,7 @@ import { wrapIndex } from "../util/func";
 import { Config } from "../config";
 import MonocleLayout from "./layout/monocle_layout";
 import TileLayout from "./layout/tile_layout";
+import TabbedMasterLayout from "./layout/tile_stair_layout";
 import CascadeLayout from "./layout/cascade_layout";
 import QuarterLayout from "./layout/quarter_layout";
 import SpiralLayout from "./layout/spiral_layout";
@@ -111,6 +112,8 @@ export class LayoutStoreEntry {
       return new ThreeColumnLayout(this.config);
     } else if (id == TileLayout.id) {
       return new TileLayout(this.config, this.proxy, this.uid);
+    } else if (id == TabbedMasterLayout.id) {
+      return new TabbedMasterLayout(this.config, this.proxy, this.uid);
     } else {
       return new FloatingLayout();
     }

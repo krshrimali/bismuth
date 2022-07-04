@@ -494,6 +494,63 @@ export class PushActiveWindowIntoMasterAreaFront
   }
 }
 
+export class MoveActiveWindowToNextStack extends ActionImpl implements Action {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "move_window_to_next_stack",
+      "Promote/Demote Window to/from Master Stack",
+      "Meta+G",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    const win = this.engine.currentWindow();
+    if (win) {
+      this.engine.cycleWindowBetweenStacks(win);
+    }
+  }
+}
+
+export class FocusNextInStack extends ActionImpl implements Action {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "focus_next_in_stack",
+      "Focus Next in Current Stack",
+      "Meta+Tab",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    const win = this.engine.currentWindow();
+    if (win) {
+      this.engine.cycleFocusWithinStack(false);
+    }
+  }
+}
+
+export class FocusPreviousInStack extends ActionImpl implements Action {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "focus_prev_in_stack",
+      "Focus Previous in Current Stack",
+      "Meta+Shift+Tab",
+      log
+    );
+  }
+
+  public executeWithoutLayoutOverride(): void {
+    const win = this.engine.currentWindow();
+    if (win) {
+      this.engine.cycleFocusWithinStack(true);
+    }
+  }
+}
+
 export class SwitchToNextLayout extends ActionImpl implements Action {
   constructor(protected engine: Engine, protected log: Log) {
     super(engine, "next_layout", "Switch to the Next Layout", "Meta+\\", log);
@@ -545,6 +602,19 @@ export class ToggleTileLayout extends ToggleCurrentLayout {
       "toggle_tile_layout",
       "Toggle Tile Layout",
       "Meta+T",
+      log
+    );
+  }
+}
+
+export class ToggleTabbedMasterLayout extends ToggleCurrentLayout {
+  constructor(protected engine: Engine, protected log: Log) {
+    super(
+      engine,
+      "TabbedMasterLayout",
+      "toggle_tabbed_master_layout",
+      "Toggle Tabbed Master Layout",
+      "Meta+Y",
       log
     );
   }

@@ -23,6 +23,9 @@ export interface WindowStore {
    */
   visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[];
 
+  visibleTiledWindowsIn(group: number): EngineWindow[];
+  tiledWindowsIn(group: number): EngineWindow[];
+
   /**
    * Return all visible "Tile" windows on the given activity and desktop.
    */
@@ -62,6 +65,9 @@ export interface WindowStore {
   remove(window: EngineWindow): void;
 
   contains(window: EngineWindow): boolean;
+  indexOf(window: EngineWindow): number;
+  at(idx: number): EngineWindow;
+  isInMasterStack(window: EngineWindow, stackSize: number): boolean;
 
   /**
    * Move srcWin to the destWin position (before/after)
@@ -159,6 +165,16 @@ export class WindowStoreImpl implements WindowStore {
     this.list.unshift(window);
   }
 
+  public isInMasterStack(window: EngineWindow, stackSize: number): boolean {
+    const windowStack = this.tiledWindowsIn(window.window.group).filter(
+      (win) => !win.minimized || win == window
+    );
+    this.log.log(`checking ${window.window.group}`);
+    const foundIndex = windowStack.indexOf(window);
+    this.log.log(`found at ${foundIndex}`);
+    return 0 <= foundIndex && foundIndex < stackSize;
+  }
+
   public contains(window: EngineWindow): boolean {
     return this.list.find((win) => win.id == window.id) != undefined;
   }
@@ -169,6 +185,10 @@ export class WindowStoreImpl implements WindowStore {
 
   public visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[] {
     return this.list.filter((win) => win.tiled && win.visibleOn(surf));
+  }
+
+  public visibleTiledWindowsIn(group: number): EngineWindow[] {
+    return this.list.filter((win) => win.tileable && win.window.group == group);
   }
 
   public visibleTiledWindows(act: string, desk: number): EngineWindow[] {
@@ -182,6 +202,12 @@ export class WindowStoreImpl implements WindowStore {
   public tileableWindowsOn(surf: DriverSurface): EngineWindow[] {
     return this.list.filter(
       (win) => win.tileable && win.surface?.id === surf.id
+    );
+  }
+
+  public tiledWindowsIn(group: number): EngineWindow[] {
+    return this.list.filter(
+      (win) => (win.tileable || win.minimized) && win.window.group == group
     );
   }
 

@@ -22,6 +22,11 @@ Kirigami.Page {
         }
 
         ListElement {
+            name: "Tabbed Master"
+            settingName: "enableTabbedMasterLayout"
+        }
+
+        ListElement {
             name: "Monocle"
             settingName: "enableMonocleLayout"
             editable: true
