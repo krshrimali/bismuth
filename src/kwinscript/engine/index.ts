@@ -7,7 +7,12 @@ import MonocleLayout from "./layout/monocle_layout";
 
 import LayoutStore from "./layout_store";
 import { WindowStore, WindowStoreImpl } from "./window_store";
-import { EngineWindow, EngineWindowImpl, WindowState } from "./window";
+import {
+  EngineWindow,
+  EngineWindowImpl,
+  WindowConfig,
+  WindowState,
+} from "./window";
 
 import { Controller } from "../controller";
 
@@ -539,7 +544,24 @@ export class EngineImpl implements Engine {
           !window.shouldIgnore
         ) {
           this.log.log(`restoring window position for: ${window}`);
-          window.state = WindowState.Undecided;
+
+          const w = JSON.parse(
+            this.proxy.getWindowState(
+              (window.window as DriverWindowImpl).client.windowId.toString()
+            )
+          ) as WindowConfig;
+
+          if (w.minimized) {
+            this.log.log(`found minimized window ${this}`);
+            window.minimized = true;
+            window.state = WindowState.Undecided;
+          } else if (w.state == WindowState.Floating) {
+            this.log.log(`set window floating`);
+            window.state = WindowState.Floating;
+          } else {
+            window.state = WindowState.Undecided;
+          }
+
           this.windows.push(window);
           break;
         }
@@ -869,6 +891,10 @@ export class EngineImpl implements Engine {
 
   public toggleFloat(window: EngineWindow): void {
     window.state = !window.tileable ? WindowState.Tiled : WindowState.Floating;
+    if (this.config.keepFloatAbove) {
+      (window.window as DriverWindowImpl).client.keepAbove =
+        window.state == WindowState.Floating ? true : false;
+    }
   }
 
   public setMaster(window: EngineWindow): void {

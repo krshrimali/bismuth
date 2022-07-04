@@ -325,7 +325,9 @@ export class ControllerImpl implements Controller {
   }
 
   public onWindowAdded(window: EngineWindow): void {
-    this.log.log(["onWindowAdded", { window }]);
+    this.log.log(
+      `onWindowAdded: desktop ${window.desktop} screen ${window.screen} group ${window.window.group} ${window}`
+    );
     this.engine.manage(window);
     this.engine.arrange(window.surface);
 

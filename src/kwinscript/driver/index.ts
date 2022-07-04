@@ -316,6 +316,12 @@ export class DriverImpl implements Driver {
         this.log.log(`Client is ok, can manage. Bind events now...`);
         this.bindWindowEvents(window, client);
       }
+
+      if (this.config.keepFloatAbove) {
+        if (window.shouldFloat) {
+          (window.window as DriverWindowImpl).client.keepAbove = true;
+        }
+      }
     };
 
     const onClientRemoved = (client: KWin.Client): void => {
@@ -351,7 +357,6 @@ export class DriverImpl implements Driver {
 
       if (window) {
         window.minimized = true;
-        window.state = WindowState.NativeMinimized;
       }
 
       this.controller.onWindowChanged(window, "minimized");
@@ -362,9 +367,6 @@ export class DriverImpl implements Driver {
 
       if (window) {
         window.minimized = false;
-        window.state = window.shouldFloat
-          ? WindowState.Floating
-          : WindowState.Tiled;
       }
 
       this.controller.onWindowChanged(window, "unminimized");

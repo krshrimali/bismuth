@@ -37,6 +37,7 @@ export enum WindowState {
 export interface WindowConfig {
   group: number;
   minimized: boolean;
+  state: WindowState;
 }
 
 /**
@@ -120,7 +121,7 @@ export interface EngineWindow {
   /**
    * Geometry of a window, while in floated state
    */
-  floatGeometry: Rect;
+  floatGeometry: Rect | undefined;
 
   /**
    * Window geometry
@@ -245,7 +246,7 @@ export class EngineWindowImpl implements EngineWindow {
     return this.window.shaded;
   }
 
-  public floatGeometry: Rect;
+  public floatGeometry: Rect | undefined;
   public geometry: Rect;
   public timestamp: number;
 
@@ -296,6 +297,19 @@ export class EngineWindowImpl implements EngineWindow {
     }
 
     this.internalState = value;
+
+    const saveState = JSON.parse(
+      this.proxy.getWindowState(
+        (this.window as DriverWindowImpl).client.windowId.toString()
+      )
+    ) as WindowConfig;
+
+    saveState.state = value;
+
+    this.proxy.putWindowState(
+      (this.window as DriverWindowImpl).client.windowId.toString(),
+      JSON.stringify(saveState)
+    );
   }
 
   public get statePreviouslyAskedToChangeTo(): WindowState {
@@ -365,27 +379,14 @@ export class EngineWindowImpl implements EngineWindow {
     this.id = window.id;
     this.window = window;
     this.internalStatePreviouslyAskedToChangeTo = WindowState.Floating;
-    // this._group = window.surface.currentGroup;
-    // this.log.log(`made on ${this._group} ${this}`);
 
-    this.floatGeometry = window.geometry;
+    this.floatGeometry = undefined;
     this.geometry = window.geometry;
     this.timestamp = 0;
 
     this.internalState = WindowState.Unmanaged;
     this.shouldCommitFloat = this.shouldFloat;
     this.weightMap = {};
-
-    const w = JSON.parse(
-      this.proxy.getWindowState(
-        (this.window as DriverWindowImpl).client.windowId.toString()
-      )
-    ) as WindowConfig;
-    if (w.minimized) {
-      this.log.log(`found minimized window ${this}`);
-      this.minimized = true;
-      this.state = WindowState.NativeMinimized;
-    }
   }
 
   public commit(): void {
@@ -397,47 +398,39 @@ export class EngineWindowImpl implements EngineWindow {
     this.log.log(`commit state: ${state} ${this}`);
     switch (state) {
       case WindowState.NativeMaximized:
-        this.window.commit(
-          this.window.surface.workingArea,
-          undefined,
-          undefined
-        );
+        this.window.commit(this.window.surface.workingArea);
         break;
 
       case WindowState.NativeFullscreen:
-        this.window.commit(undefined, undefined, undefined);
+        this.window.commit();
         break;
 
       case WindowState.Floating:
         if (!this.shouldCommitFloat) {
           break;
         }
-        this.window.commit(
-          this.floatGeometry,
-          false,
-          this.config.keepFloatAbove
-        );
+        this.log.log(`commit floating`);
+        this.window.commit(this.floatGeometry, false);
         this.shouldCommitFloat = false;
         break;
 
       case WindowState.Maximized:
-        this.window.commit(this.geometry, true, false);
+        this.window.commit(this.geometry, true);
         break;
 
       case WindowState.Tiled:
+        this.window.commit(this.geometry, this.config.noTileBorder);
+        break;
+
       case WindowState.NativeMinimized:
-        this.window.commit(this.geometry, this.config.noTileBorder, false);
+        this.window.commit(undefined, this.config.noTileBorder);
         break;
 
       case WindowState.TiledAfloat:
         if (!this.shouldCommitFloat) {
           break;
         }
-        this.window.commit(
-          this.floatGeometry,
-          false,
-          this.config.keepFloatAbove
-        );
+        this.window.commit(this.floatGeometry, false);
         this.shouldCommitFloat = false;
         break;
     }
