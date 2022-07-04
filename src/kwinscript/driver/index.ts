@@ -261,8 +261,7 @@ export class DriverImpl implements Driver {
             this.qml,
             this.config,
             this.log,
-            this.proxy,
-            this.controller.screens()[client.screen].group
+            this.proxy
           ),
           this.config,
           this.log,
@@ -301,7 +300,7 @@ export class DriverImpl implements Driver {
       // this.groupMap[client.windowId] = group;
       const window = this.windowMap.add(client);
 
-      // hack to override group stored in cache
+      // don't use whatever group was stored in the cache
       window.window.group = group;
 
       this.controller.onWindowAdded(window);
@@ -427,11 +426,9 @@ export class DriverImpl implements Driver {
       return null;
     }
 
-    if (window.window.group != group) {
-      this.log.log(
-        `window spawned on surface ${client.screen} in group ${window.window.group}`
-      );
-      window.window.hidden = true;
+    // windows that don't have a group stored in the cache go to the active group
+    if (!window.window.group) {
+      window.window.group = group;
     }
 
     this.bindWindowEvents(window, client);

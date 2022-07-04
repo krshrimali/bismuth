@@ -111,6 +111,7 @@ export interface DriverWindow {
 export class DriverWindowImpl implements DriverWindow {
   public readonly id: string;
   private _screen: number | null;
+  private _group: number;
 
   public get fullScreen(): boolean {
     return this.client.fullScreen;
@@ -264,24 +265,20 @@ export class DriverWindowImpl implements DriverWindow {
   private noBorderOriginal: boolean;
 
   public get group(): number {
-    // if (!this._group) {
-    //   return this.surface.group;
-    // }
-
-    // if (this.surface) {
-    //   return this.surface.group;
-    // }
+    if (this._group) {
+      return this._group;
+    }
 
     const state = JSON.parse(
       this.proxy.getWindowState(this.client.windowId.toString())
     ) as WindowConfig;
-    const g = state.group;
-    // this.log.log(`got window group ${g}`);
-    return g;
-    // return this._group;
+    this._group = state.group;
+    return this._group;
   }
 
   public set group(groupId: number) {
+    this._group = groupId;
+
     const state = JSON.parse(
       this.proxy.getWindowState(this.client.windowId.toString())
     ) as WindowConfig;
@@ -342,31 +339,18 @@ export class DriverWindowImpl implements DriverWindow {
     private qml: Bismuth.Qml.Main,
     private config: Config,
     private log: Log,
-    private proxy: TSProxy,
-    private _group: number
+    private proxy: TSProxy
   ) {
     this.id = DriverWindowImpl.generateID(client);
     this.maximized = false;
     this.noBorderManaged = false;
     this.noBorderOriginal = client.noBorder;
     this._screen = client.screen;
+    this._group = 0;
 
     if (!this.shouldIgnore) {
       this.hidden = false;
     }
-
-    if (!this.group) {
-      this.group = _group;
-      this.log.log(`resetting to group ${_group}`);
-    } else {
-      this.log.log(`using existing group ${this.group}`);
-    }
-
-    // if (this.screen < 5) {
-    //   this.hidden = false;
-    // } else {
-    //   this.hidden = true;
-    // }
   }
 
   public static generateID(client: KWin.Client): string {

@@ -129,7 +129,7 @@ QString TSProxy::getLayoutState(QString stateId)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-layoutstates.json");
+    file.setFileName("/dev/shm/kwin-bismuth-layoutstates.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -152,7 +152,7 @@ void TSProxy::putLayoutState(QString stateId, QString state)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-layoutstates.json");
+    file.setFileName("/dev/shm/kwin-bismuth-layoutstates.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -181,7 +181,7 @@ QString TSProxy::getWindowState(QString windowId)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-windowstates.json");
+    file.setFileName("/dev/shm/kwin-bismuth-windowstates.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -224,7 +224,7 @@ void TSProxy::putWindowState(QString windowId, QString state)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-windowstates.json");
+    file.setFileName("/dev/shm/kwin-bismuth-windowstates.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -265,7 +265,7 @@ QString TSProxy::getWindowList()
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-windowlist.json");
+    file.setFileName("/dev/shm/kwin-bismuth-windowlist.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -289,7 +289,7 @@ void TSProxy::putWindowList(const QString list)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-windowlist.json");
+    file.setFileName("/dev/shm/kwin-bismuth-windowlist.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -316,7 +316,7 @@ int TSProxy::getSurfaceGroup(int desktop, int screen)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-surfacegroups.json");
+    file.setFileName("/dev/shm/kwin-bismuth-surfacegroups.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();
@@ -334,7 +334,7 @@ void TSProxy::setSurfaceGroup(int desktop, int screen, int groupID)
 {
     QString fileText;
     QFile file;
-    file.setFileName("/tmp/kwin-bismuth-surfacegroups.json");
+    file.setFileName("/dev/shm/kwin-bismuth-surfacegroups.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     fileText = file.readAll();
     file.close();

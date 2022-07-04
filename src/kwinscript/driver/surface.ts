@@ -43,6 +43,7 @@ export class DriverSurfaceImpl implements DriverSurface {
   public readonly id: string;
   public readonly ignore: boolean;
   public workingArea: Rect;
+  private _group: number;
 
   constructor(
     private _screen: number,
@@ -54,6 +55,7 @@ export class DriverSurfaceImpl implements DriverSurface {
     private log: Log
   ) {
     this.id = this.generateId();
+    this._group = 0;
 
     // this.log.log(`surface made with ${_group}`);
 
@@ -97,6 +99,10 @@ export class DriverSurfaceImpl implements DriverSurface {
   }
 
   public get group(): number {
+    if (this._group) {
+      return this._group;
+    }
+
     let g = this.proxy.getSurfaceGroup(this.desktop, this.screen);
     if (!g) {
       const customScreenOrder = [4, 1, 3, 2, 5, 6, 7, 8, 9];
@@ -104,12 +110,14 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.log.log(`initialize ${this.desktop}:${this.screen} to group ${g}`);
       this.group = g;
     }
+    this._group = g;
     return g;
   }
 
   public set group(groupID: number) {
     this.log.log(`setSurfaceGroup: ${this.desktop}:${this.screen} ${groupID}`);
     this.proxy.setSurfaceGroup(this.desktop, this.screen, groupID);
+    this._group = groupID;
   }
 
   public toString(): string {

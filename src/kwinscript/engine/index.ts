@@ -377,7 +377,7 @@ export class EngineImpl implements Engine {
       return;
     }
 
-    this.log.log("someone called global arrange");
+    this.log.log("arranging all surfaces");
 
     this.controller
       .screens(this.controller.currentActivity, this.controller.currentDesktop)
@@ -558,6 +558,7 @@ export class EngineImpl implements Engine {
     for (const window of (this.windows as WindowStoreImpl).list) {
       list.push((window.window as DriverWindowImpl).client.windowId.toString());
     }
+    this.log.log("writing window list to disk");
     this.proxy.putWindowList(JSON.stringify(list));
   }
 
