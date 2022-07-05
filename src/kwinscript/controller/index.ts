@@ -111,6 +111,7 @@ export interface Controller {
   onWindowDesktopChanged(window: EngineWindow): void;
   onWindowMinimized(window: EngineWindow): void;
   onWindowUnminimized(window: EngineWindow): void;
+  onFullScreenChanged(window: EngineWindow): void;
   onWorkspaceDestroyed(): void;
 
   /**
@@ -647,6 +648,13 @@ export class ControllerImpl implements Controller {
 
     this.engine.moveToMasterStack(window);
     layout.numMasterTiles += 1;
+    this.engine.arrange(window.surface);
+  }
+
+  public onFullScreenChanged(window: EngineWindow): void {
+    if (!window.surface) {
+      return;
+    }
     this.engine.arrange(window.surface);
   }
 

@@ -636,6 +636,10 @@ export class DriverImpl implements Driver {
       }
     });
 
+    this.connect(client.fullScreenChanged, () => {
+      this.controller.onFullScreenChanged(window);
+    });
+
     this.connect(client.activeChanged, () => {
       if (client.active) {
         this.controller.onWindowFocused(window);

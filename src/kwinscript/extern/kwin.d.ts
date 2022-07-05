@@ -310,5 +310,7 @@ declare namespace KWin {
     clientMaximizedStateChanged: QSignal;
 
     windowClosed: QSignal;
+
+    fullScreenChanged: QSignal;
   }
 }
