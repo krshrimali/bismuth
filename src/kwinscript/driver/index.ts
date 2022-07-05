@@ -376,10 +376,10 @@ export class DriverImpl implements Driver {
     this.connect(this.kwinApi.workspace.clientMaximizeSet, onClientMaximizeSet);
     this.connect(this.kwinApi.workspace.clientMinimized, onClientMinimized);
     this.connect(this.kwinApi.workspace.clientUnminimized, onClientUnminimized);
-    this.connect(
-      this.kwinApi.workspace.workspaceDestroyed,
-      onWorkspaceDestroyed
-    );
+    // this.connect(
+    //   this.kwinApi.workspace.workspaceDestroyed,
+    //   onWorkspaceDestroyed
+    // );
   }
 
   public manageWindows(): void {
