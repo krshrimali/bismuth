@@ -270,10 +270,10 @@ export class DriverImpl implements Driver {
       // this is a new window; don't use whatever group was stored in the cache
       window.window.group = group;
 
-      // // in case a naughty program tried to open on another desktop, force it here
-      // if (!window.shouldIgnore) {
-      //   window.desktop = currentDesktop;
-      // }
+      // in case a naughty program tried to open on another desktop, force it here
+      if (!window.shouldIgnore) {
+        window.desktop = currentDesktop;
+      }
 
       this.controller.onWindowAdded(window);
 
