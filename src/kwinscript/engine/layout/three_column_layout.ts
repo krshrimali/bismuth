@@ -231,7 +231,9 @@ export default class ThreeColumnLayout implements WindowsLayout {
       );
     } else {
       action.executeWithoutLayoutOverride();
+      return;
     }
+    engine.arrange(engine.currentSurface);
   }
 
   public toString(): string {

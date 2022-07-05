@@ -353,6 +353,7 @@ export class EngineImpl implements Engine {
         delta
       );
     }
+    this.arrange(basis.surface);
   }
 
   public resizeWindow(
@@ -711,6 +712,7 @@ export class EngineImpl implements Engine {
     const dstWin = visibles[vdst];
 
     this.windows.move(window, dstWin);
+    this.arrange(srf);
     this.saveWindows();
   }
 
@@ -746,11 +748,14 @@ export class EngineImpl implements Engine {
       if (iBefore == iAfter) {
         this.windows.swap(window, neighbor);
       }
+      this.arrange(window.surface);
       this.saveWindows();
       return;
     } else if (!this.config.moveBetweenSurfaces) {
       return;
     }
+
+    // no neighbor on same surface; check next surfaces
 
     const screenCandidates = this.controller
       .screens()
@@ -770,15 +775,17 @@ export class EngineImpl implements Engine {
       doesn't seem sensible after the layout rearranges with the new window */
 
       const oldWindowPosition = window.geometry;
-      window.window.surface = neighbor.surface;
-      this.arrangeScreen(window.window.surface);
+      const oldSurface = window.surface;
+      window.window.surface = closestSurface;
+      this.arrangeScreen(closestSurface);
 
       const closestSlot = this.getNeighborByDirection(oldWindowPosition, dir);
-      if (!closestSlot) {
-        return;
+      if (closestSlot) {
+        this.windows.move(window, closestSlot);
       }
 
-      this.windows.move(window, closestSlot);
+      this.arrange(oldSurface);
+      this.arrange(closestSurface);
       this.saveWindows();
     } else if (closestSurface) {
       this.log.log(`moving to empty screen ${closestSurface}`);
@@ -941,6 +948,7 @@ export class EngineImpl implements Engine {
       (window.window as DriverWindowImpl).client.keepAbove =
         window.state == WindowState.Floating ? true : false;
     }
+    this.arrange(window.surface);
   }
 
   public setMaster(window: EngineWindow): void {
@@ -1066,6 +1074,7 @@ export class EngineImpl implements Engine {
       ) {
         this.minimizeOthers(this.controller.currentWindow);
       }
+      this.arrange(this.controller.currentSurface);
     }
   }
 
@@ -1084,6 +1093,7 @@ export class EngineImpl implements Engine {
       ) {
         this.minimizeOthers(this.controller.currentWindow);
       }
+      this.arrange(this.controller.currentSurface);
     }
   }
 

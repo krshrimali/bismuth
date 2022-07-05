@@ -135,6 +135,8 @@ export default class SpiralLayout implements WindowsLayout {
       this.rotate(-90);
     } else {
       action.executeWithoutLayoutOverride();
+      return;
     }
+    engine.arrange(engine.currentSurface);
   }
 }

@@ -112,6 +112,8 @@ export default class CascadeLayout implements WindowsLayout {
       engine.showLayoutNotification();
     } else {
       action.executeWithoutLayoutOverride();
+      return;
     }
+    engine.arrange(engine.currentSurface);
   }
 }

@@ -155,7 +155,9 @@ export default class TileLayout implements WindowsLayout {
       this.parts.inner.primary.rotate(90);
     } else {
       action.executeWithoutLayoutOverride();
+      return;
     }
+    engine.arrange(engine.currentSurface);
   }
 
   public toString(): string {

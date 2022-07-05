@@ -69,9 +69,6 @@ abstract class ActionImpl implements Action {
     } else {
       this.executeWithoutLayoutOverride();
     }
-
-    // TODO: Maybe it worth moving this into engine?
-    this.engine.arrange(this.engine.currentSurface);
   }
 
   /**

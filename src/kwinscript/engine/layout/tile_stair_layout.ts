@@ -10,6 +10,8 @@ import {
   StackLayoutPart,
 } from "./layout_part";
 
+import { StairLayoutPart } from "./stair_part";
+
 import { WindowState, EngineWindow } from "../window";
 
 import {
@@ -29,7 +31,6 @@ import { Config } from "../../config";
 import { Controller } from "../../controller";
 import { Engine } from "..";
 import { TSProxy } from "../../extern/proxy";
-import StairLayoutPart from "./stair_part";
 
 export default class TabbedMasterLayout implements WindowsLayout {
   public static readonly MIN_MASTER_RATIO = 0.2;
@@ -159,7 +160,9 @@ export default class TabbedMasterLayout implements WindowsLayout {
       this.state.partRotation = this.parts.inner.secondary.angle;
     } else {
       action.executeWithoutLayoutOverride();
+      return;
     }
+    engine.arrange(engine.currentSurface);
   }
 
   public toString(): string {

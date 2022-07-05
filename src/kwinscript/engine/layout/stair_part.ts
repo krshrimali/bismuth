@@ -15,7 +15,7 @@ import { Rect, RectDelta } from "../../util/rect";
 import { Engine } from "..";
 import { ILayoutPart } from "./layout_part";
 
-export default class StairLayoutPart implements ILayoutPart {
+export class StairLayoutPart implements ILayoutPart {
   public static readonly id = "StairLayoutPart";
   public readonly classID = StairLayoutPart.id;
   public readonly name = "Stair Layout";
