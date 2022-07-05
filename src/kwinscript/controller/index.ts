@@ -236,6 +236,18 @@ export class ControllerImpl implements Controller {
     this.driver.manageWindows();
 
     this.engine.arrange();
+
+    // show OSD notification on each monitor
+    for (const surf of this.screens()) {
+      const layout = this.engine.layouts.getCurrentLayout(surf);
+      this.showNotification(
+        layout.name,
+        layout.icon,
+        layout.hint,
+        `Group ${surf.group}`,
+        surf.screen
+      );
+    }
   }
 
   public screens(activity?: string, desktop?: number): DriverSurface[] {
