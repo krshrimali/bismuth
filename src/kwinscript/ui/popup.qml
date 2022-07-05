@@ -13,7 +13,7 @@ PlasmaCore.Dialog {
 
     property rect screenGeometry
 
-    function show(text, icon, hint, screen=-1) {
+    function show(text, icon, hint, subtext, screen=-1) {
         // Abort any previous timers
         hideTimer.stop();
         // Update current screen information
@@ -25,6 +25,8 @@ PlasmaCore.Dialog {
         messageText.text = text;
         messageIcon.source = icon || "bismuth"; // Fallback to the default icon when undefined
         messageHint.text = hint || ""; // Fallback to the empty string when undefined
+        messageSub.text = subtext || "";
+        subRow.visible = messageSub.text.length ? true : false;
         // Show the popup
         this.visible = true;
         // Start popup hide timer
@@ -44,50 +46,73 @@ PlasmaCore.Dialog {
         KWin.registerWindow(this);
     }
 
-    mainItem: RowLayout {
+    mainItem: ColumnLayout {
         id: main
 
         // Make popup size consistent with the other Plasma OSD (e.g. PulseAudio one)
         Layout.minimumWidth: Math.max(messageText.implicitWidth, PlasmaCore.Units.gridUnit * 15)
-        Layout.minimumHeight: PlasmaCore.Units.gridUnit * 1.35
 
-        PlasmaCore.IconItem {
-            id: messageIcon
-
-            Layout.leftMargin: PlasmaCore.Units.smallSpacing
-            Layout.preferredWidth: PlasmaCore.Units.iconSizes.medium
-            Layout.preferredHeight: PlasmaCore.Units.iconSizes.medium
-            Layout.alignment: Qt.AlignVCenter
-        }
-
-        PC3.Label {
-            id: messageText
-
+        RowLayout {
+            id: mainRow1
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-            // This font size matches the one from Pulse Audio OSD for consistency
-            font.pointSize: PlasmaCore.Theme.defaultFont.pointSize * 1.2
-            horizontalAlignment: Text.AlignHCenter
+            Layout.fillHeight: true
+            Layout.preferredHeight: PlasmaCore.Units.gridUnit * 1.35
+
+            PlasmaCore.IconItem {
+                id: messageIcon
+
+                Layout.leftMargin: PlasmaCore.Units.smallSpacing
+                Layout.preferredWidth: PlasmaCore.Units.iconSizes.medium
+                Layout.preferredHeight: PlasmaCore.Units.iconSizes.medium
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            PC3.Label {
+                id: messageText
+
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                // This font size matches the one from Pulse Audio OSD for consistency
+                font.pointSize: PlasmaCore.Theme.defaultFont.pointSize * 1.2
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            PC3.Label {
+                id: messageHint
+
+                Layout.preferredWidth: widestHintSize.width
+                Layout.rightMargin: PlasmaCore.Units.smallSpacing * 2
+                Layout.alignment: Qt.AlignHCenter
+                // This font size matches the one from Pulse Audio OSD for consistency
+                font.pointSize: PlasmaCore.Theme.defaultFont.pointSize * 1.2
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            // Get the width of a two-digit number so we can size the hint
+            // to the maximum width to avoid the main text moving around
+            TextMetrics {
+                id: widestHintSize
+
+                text: i18n("10")
+                font: messageHint.font
+            }
         }
 
-        PC3.Label {
-            id: messageHint
+        RowLayout {
+            id: subRow
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredHeight: PlasmaCore.Units.gridUnit * 1.35
 
-            Layout.preferredWidth: widestHintSize.width
-            Layout.rightMargin: PlasmaCore.Units.smallSpacing * 2
-            Layout.alignment: Qt.AlignHCenter
-            // This font size matches the one from Pulse Audio OSD for consistency
-            font.pointSize: PlasmaCore.Theme.defaultFont.pointSize * 1.2
-            horizontalAlignment: Text.AlignHCenter
-        }
+            PC3.Label {
+                id: messageSub
 
-        // Get the width of a two-digit number so we can size the hint
-        // to the maximum width to avoid the main text moving around
-        TextMetrics {
-            id: widestHintSize
-
-            text: i18n("10")
-            font: messageHint.font
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                // This font size matches the one from Pulse Audio OSD for consistency
+                font.pointSize: PlasmaCore.Theme.defaultFont.pointSize * 1.2
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
 
         // Hides the popup window when triggered

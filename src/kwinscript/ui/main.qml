@@ -53,8 +53,8 @@ Item {
     Loader {
         id: popupDialog0
 
-        function show(text, icon, hint, screen) {
-            this.item.show(text, icon, hint, screen);
+        function show(text, icon, hint, subtext, screen) {
+            this.item.show(text, icon, hint, subtext, screen);
         }
 
         source: "popup.qml"
@@ -62,8 +62,8 @@ Item {
     Loader {
         id: popupDialog1
 
-        function show(text, icon, hint, screen) {
-            this.item.show(text, icon, hint, screen);
+        function show(text, icon, hint, subtext, screen) {
+            this.item.show(text, icon, hint, subtext, screen);
         }
 
         source: "popup.qml"
@@ -71,8 +71,8 @@ Item {
     Loader {
         id: popupDialog2
 
-        function show(text, icon, hint, screen) {
-            this.item.show(text, icon, hint, screen);
+        function show(text, icon, hint, subtext, screen) {
+            this.item.show(text, icon, hint, subtext, screen);
         }
 
         source: "popup.qml"
@@ -80,8 +80,8 @@ Item {
     Loader {
         id: popupDialog3
 
-        function show(text, icon, hint, screen) {
-            this.item.show(text, icon, hint, screen);
+        function show(text, icon, hint, subtext, screen) {
+            this.item.show(text, icon, hint, subtext, screen);
         }
 
         source: "popup.qml"
@@ -89,8 +89,8 @@ Item {
     Loader {
         id: popupDialog4
 
-        function show(text, icon, hint, screen) {
-            this.item.show(text, icon, hint, screen);
+        function show(text, icon, hint, subtext, screen) {
+            this.item.show(text, icon, hint, subtext, screen);
         }
 
         source: "popup.qml"

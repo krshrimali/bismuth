@@ -18,7 +18,13 @@ declare namespace Bismuth {
     }
 
     export interface PopupDialog {
-      show(text: string, icon?: string, hint?: string, screen?: number): void;
+      show(
+        text: string,
+        icon?: string,
+        hint?: string,
+        subtext?: string,
+        screen?: number
+      ): void;
     }
   }
 }

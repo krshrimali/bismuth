@@ -57,6 +57,7 @@ export interface Driver {
     text: string,
     icon?: string,
     hint?: string,
+    subtext?: string,
     screen?: number
   ): void;
 
@@ -205,37 +206,10 @@ export class DriverImpl implements Driver {
   ) {
     this.registeredConnections = [];
 
-    // this.groupMap = {};
-    // this.groupMapSurface = {};
-
+    // we need one unused desktop to store hidden windows on, so add one if needed
     if (this.proxy.workspace().desktops < 2) {
       this.proxy.workspace().desktops++;
     }
-    const numDesktops = this.proxy.workspace().desktops;
-
-    const customScreenOrder = [1, 3, 2, 0, 4, 5, 6, 7, 8, 9];
-    // const customScreenOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-    // const numScreens = this.proxy.workspace().numScreens;
-    // let groupId = 1;
-    // for (let desktop = 1; desktop <= numDesktops; desktop++) {
-    //   this.groupMapSurface[desktop] = {};
-    //   for (let screen = 0; screen < numScreens; screen++) {
-    //     this.groupMapSurface[desktop][customScreenOrder[screen]] = groupId++;
-    //   }
-
-    //   // // custom group mapping for misordered screens
-    //   // this.groupMapSurface[desktop][1] = 1 + (desktop - 1) * 10;
-    //   // this.groupMapSurface[desktop][3] = 2 + (desktop - 1) * 10;
-    //   // this.groupMapSurface[desktop][2] = 3 + (desktop - 1) * 10;
-    //   // this.groupMapSurface[desktop][0] = 4 + (desktop - 1) * 10;
-    //   // this.groupMapSurface[desktop][4] = 5 + (desktop - 1) * 10;
-    // }
-
-    // // set initial groupId for each surface to its screen number
-    // for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
-    //   this.groupMapSurface[screen] = screen + 1; // start groups at 1
-    // }
 
     // TODO: find a better way to to this
     if (this.config.preventMinimize && this.config.monocleMinimizeRest) {
@@ -281,7 +255,7 @@ export class DriverImpl implements Driver {
         `Client added to desktop ${client.desktop} screen ${client.screen}: ${client}`
       );
 
-      const desktop = this.proxy.workspace().currentDesktop;
+      const currentDesktop = this.proxy.workspace().currentDesktop;
       const group = this.controller.currentSurface.group;
 
       this.log.log(
@@ -293,19 +267,13 @@ export class DriverImpl implements Driver {
       // this.groupMap[client.windowId] = group;
       const window = this.windowMap.add(client);
 
-      // don't use whatever group was stored in the cache
+      // this is a new window; don't use whatever group was stored in the cache
       window.window.group = group;
 
-      // hide the window if it's not currently on any monitor
-      if (!window.shouldIgnore) {
-        let surface = null;
-        for (const surf of this.controller.screens()) {
-          if (surf.group == window.window.group) {
-            surface = surf;
-          }
-        }
-        window.window.hidden = surface ? false : true;
-      }
+      // // in case a naughty program tried to open on another desktop, force it here
+      // if (!window.shouldIgnore) {
+      //   window.desktop = currentDesktop;
+      // }
 
       this.controller.onWindowAdded(window);
 
@@ -445,13 +413,11 @@ export class DriverImpl implements Driver {
     );
 
     // Add window to our window map
-    // this.groupMap[client.windowId] = group;
     const window = this.windowMap.add(client);
 
     if (window.shouldIgnore) {
       window.window.group = 0;
       this.windowMap.remove(client);
-      // delete this.groupMap[client.windowId];
       return null;
     }
 
@@ -460,16 +426,10 @@ export class DriverImpl implements Driver {
       window.window.group = group;
     }
 
-    // hide the window if it's not currently on any monitor
-    if (!window.shouldIgnore) {
-      let surface = null;
-      for (const surf of this.controller.screens()) {
-        if (surf.group == window.window.group) {
-          surface = surf;
-        }
-      }
-      window.window.hidden = surface ? false : true;
-    }
+    // // move windows that load on the hidden desktop to the current desktop
+    // if (window.desktop == this.kwinApi.workspace.desktops) {
+    //   window.window.desktop = this.currentDesktop;
+    // }
 
     this.bindWindowEvents(window, client);
 
@@ -487,8 +447,7 @@ export class DriverImpl implements Driver {
       return null;
     }
 
-    const windowImpl = window.window as DriverWindowImpl;
-    // const oldGroup = this.groupMap[windowImpl.client.windowId];
+    // find if any surface was currently displaying the window's old group
     const oldGroup = window.window.group;
     let oldSurf = null;
     for (const surf of this.controller.screens()) {
@@ -502,81 +461,46 @@ export class DriverImpl implements Driver {
       `moving window from group ${oldGroup} to group ${groupId} ${window}`
     );
 
-    // this.groupMap[(window.window as DriverWindowImpl).client.windowId] = groupId;
-
+    // find a surface, if any, to display the window in its new group
     for (const surf of this.controller.screens()) {
       if (surf.group == groupId) {
         this.log.log(`showing window on surface ${surf.screen}`);
 
         window.surface = surf;
-        // this.controller.moveWindowToSurface(window, surf);
-
-        window.window.hidden = false;
         return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
       }
     }
+    // else just hide the window as no surface currently displays its group
 
     window.window.group = groupId;
-
-    // window.window.group = groupId;
     window.window.hidden = true;
-
     return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
-
-    // this.moveWindowToSurface(window, this.controller.screens()[groupId]);
-
-    // if (window.group != groupId) {
-    //   window.group = groupId;
-    //   // this.arrangeScreen(window.surface);
-    //   // this.commitArrangement(window.surface);
-    //   this.arrange();
-    // }
   }
 
-  public swapGroupToSurface(groupId: number, screen: number): void {
-    const currentDesktop = this.proxy.workspace().currentDesktop;
-    const swapOutGroup = this.controller.screens()[screen].group;
-
-    // find if a surface is already showing this group and needs to be swapped
-    for (const surf of this.controller.screens()) {
-      if (this.controller.screens()[surf.screen].group == groupId) {
-        this.log.log(
-          `swapping screen ${screen} group ${swapOutGroup} with screen ${surf.screen} group ${groupId}`
-        );
-        this.controller.screens()[screen].group = -1;
-
-        this.controller.swapGroupToSurface(swapOutGroup, surf.screen);
-        break;
-      }
-    }
-
-    // otherwise just map the group to the surface
-
-    this.log.log(`setting screen ${screen} to group ${groupId}`);
-    this.controller.screens()[screen].group = groupId;
-  }
+  public swapGroupToSurface(groupId: number, screen: number): void {}
 
   public showNotification(
     text: string,
     icon?: string,
     hint?: string,
+    subtext?: string,
     screen?: number
   ): void {
     switch (screen) {
       case 0:
-        this.qml.popupDialog0.show(text, icon, hint, screen);
+        this.qml.popupDialog0.show(text, icon, hint, subtext, screen);
         break;
       case 1:
-        this.qml.popupDialog1.show(text, icon, hint, screen);
+        this.qml.popupDialog1.show(text, icon, hint, subtext, screen);
         break;
       case 2:
-        this.qml.popupDialog2.show(text, icon, hint, screen);
+        this.qml.popupDialog2.show(text, icon, hint, subtext, screen);
         break;
       case 3:
-        this.qml.popupDialog3.show(text, icon, hint, screen);
+        this.qml.popupDialog3.show(text, icon, hint, subtext, screen);
         break;
       case 4:
-        this.qml.popupDialog4.show(text, icon, hint, screen);
+        this.qml.popupDialog4.show(text, icon, hint, subtext, screen);
         break;
     }
   }
@@ -739,23 +663,28 @@ export class DriverImpl implements Driver {
     );
 
     this.connect(client.desktopChanged, () => {
-      // ignore hijacked desktop ids
+      // don't allow kwin moving a window to the hidden desktop
       if (
-        client.desktop == -1 ||
-        client.desktop == this.kwinApi.workspace.desktops
+        window.desktop == this.kwinApi.workspace.desktops &&
+        !window.window.hidden
       ) {
-        const badDesktop = client.desktop;
-        client.desktop = this.kwinApi.workspace.currentDesktop;
+        const badDesktop = window.desktop;
+        window.desktop = this.kwinApi.workspace.currentDesktop;
 
-        this.log.log(`ignoring window move to desktop ${client.desktop}`);
+        this.log.log(`disallowing move to desktop ${badDesktop} ${window}`);
         this.showNotification(
           `Don't use desktop ${badDesktop}`,
+          undefined,
           undefined,
           undefined,
           this.kwinApi.workspace.activeScreen
         );
         return;
+      } else if (window.desktop == this.kwinApi.workspace.desktops) {
+        // we moved it ourselves to hide it; ignore the event
+        return;
       }
+      // it's a legitimate move to another desktop, so handle it
 
       this.controller.onWindowDesktopChanged(window);
     });

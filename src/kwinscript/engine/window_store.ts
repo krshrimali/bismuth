@@ -149,9 +149,7 @@ export class WindowStoreImpl implements WindowStore {
 
   public push(window: EngineWindow): void {
     this.list.push(window);
-    this.log.log(`adding ${window.id} ${window.window.group}`);
-    // fs.writeFileSync("omg.json", "hi");
-    // this.config.windowCache[window.id] = window.window.group;
+    this.log.log(`adding ${window.id} group ${window.window.group}`);
   }
 
   public remove(window: EngineWindow): void {
@@ -212,6 +210,6 @@ export class WindowStoreImpl implements WindowStore {
   }
 
   public allWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.window.group === surf.group);
+    return this.list.filter((win) => win.window.on(surf));
   }
 }

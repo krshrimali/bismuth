@@ -33,6 +33,10 @@ export interface DriverSurface {
 
   group: number;
 
+  desktop: number;
+
+  activity: string;
+
   /**
    * The next surface. The next surface is a virtual desktop, that comes after current one.
    */

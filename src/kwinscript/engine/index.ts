@@ -597,11 +597,16 @@ export class EngineImpl implements Engine {
             window.minimized = true;
             window.state = WindowState.Undecided;
           } else if (w.state == WindowState.Floating) {
-            this.log.log(`set window floating`);
+            this.log.log(`found floating window`);
             window.state = WindowState.Floating;
           } else {
             window.state = WindowState.Undecided;
           }
+
+          // // restore saved allDesktops state (shouldn't be needed)
+          // if (w.allDesktops) {
+          //   window.window.desktop = -1;
+          // }
 
           this.windows.push(window);
           break;
@@ -1229,12 +1234,6 @@ export class EngineImpl implements Engine {
       return;
     }
 
-    this.controller.showNotification(
-      `Move window to group`,
-      undefined,
-      `${groupId}`
-    );
-
     const oldSurf = this.controller.moveWindowToGroup(groupId, window);
 
     if (oldSurf) {
@@ -1247,10 +1246,12 @@ export class EngineImpl implements Engine {
   }
 
   public swapGroupToSurface(groupId: number, screen: number): void {
+    // find if any surface is currently displaying the group
     let oldSurf = null;
     for (const surf of this.controller.screens()) {
       if (surf.group == groupId) {
         oldSurf = surf;
+        break;
       }
     }
 
@@ -1259,10 +1260,19 @@ export class EngineImpl implements Engine {
     );
 
     this.controller.swapGroupToSurface(groupId, screen);
+    const surface = this.controller.screens()[screen];
+
+    // tell kwin if any windows need their desktop changed
+    for (const win of this.windows.allWindowsOn(surface)) {
+      // don't set the desktop if it's already set to all desktops
+      if (win.desktop != -1) {
+        win.desktop = surface.desktop;
+      }
+    }
 
     this.log.log(`do arrange for screen ${this.controller.screens()[screen]}`);
 
-    this.arrange(this.controller.screens()[screen]);
+    this.arrange(surface);
 
     if (oldSurf) {
       oldSurf = this.controller.screens()[oldSurf.screen];
@@ -1274,15 +1284,23 @@ export class EngineImpl implements Engine {
   }
 
   public swapGroupToActiveSurface(groupId: number): void {
-    const activeDesktop = this.controller.currentDesktop;
-    const activeScreen = this.controller.currentSurface.screen;
-    this.controller.showNotification(`Recall group`, undefined, `${groupId}`);
+    this.swapGroupToSurface(groupId, this.controller.currentSurface.screen);
 
-    this.swapGroupToSurface(groupId, activeScreen);
-    // set focus to first window in the new group
-    this.controller.currentWindow = this.windows.visibleTiledWindowsOn(
-      this.controller.screens()[activeScreen]
-    )[0];
+    const layout = this.currentLayoutOnCurrentSurface();
+    this.controller.showNotification(
+      layout.name,
+      layout.icon,
+      layout.hint,
+      `Recalled Group ${groupId}`
+    );
+
+    // focus the most recently focused window on this surface
+    const lastWindow = this.windows
+      .allWindowsOn(this.controller.currentSurface)
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+    if (lastWindow) {
+      this.controller.currentWindow = lastWindow;
+    }
   }
 
   public moveWindowToSurface(
@@ -1338,7 +1356,8 @@ export class EngineImpl implements Engine {
     this.controller.showNotification(
       currentLayout.name,
       currentLayout.icon,
-      currentLayout.hint
+      currentLayout.hint,
+      `Group ${this.currentSurface.group}`
     );
   }
 

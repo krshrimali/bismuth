@@ -37,6 +37,7 @@ export enum WindowState {
 export interface WindowConfig {
   group: number;
   minimized: boolean;
+  allDesktops: boolean;
   state: WindowState;
 }
 
@@ -111,7 +112,7 @@ export interface EngineWindow {
    */
   readonly screen: number | null;
 
-  readonly desktop: number;
+  desktop: number;
 
   /**
    * Whether the window is minimized
@@ -218,6 +219,10 @@ export class EngineWindowImpl implements EngineWindow {
     return this.window.desktop;
   }
 
+  public set desktop(desktopNum: number) {
+    this.window.desktop = desktopNum;
+  }
+
   public get minimized(): boolean {
     return this.window.minimized;
   }
@@ -322,9 +327,6 @@ export class EngineWindowImpl implements EngineWindow {
 
   public set surface(srf: DriverSurface | null) {
     this.window.surface = srf;
-    // this.window.group = srf ? srf.group : 0;
-
-    // this._group = srf.currentGroup;
   }
 
   public get weight(): number {

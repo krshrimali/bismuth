@@ -62,6 +62,7 @@ export interface Controller {
     text: string,
     icon?: string,
     hint?: string,
+    subtext?: string,
     screen?: number
   ): void;
 
@@ -281,12 +282,13 @@ export class ControllerImpl implements Controller {
     text: string,
     icon?: string,
     hint?: string,
+    subtext?: string,
     screen?: number
   ): void {
     if (screen === -1) {
       // all screens
       for (const surf of this.screens()) {
-        this.driver.showNotification(text, icon, hint, surf.screen);
+        this.driver.showNotification(text, icon, hint, subtext, surf.screen);
       }
       return;
     } else if (screen === undefined) {
@@ -294,7 +296,7 @@ export class ControllerImpl implements Controller {
       screen = this.currentSurface.screen;
     }
     // specified screen
-    this.driver.showNotification(text, icon, hint, screen);
+    this.driver.showNotification(text, icon, hint, subtext, screen);
   }
 
   public onSurfaceUpdate(): void {
@@ -321,6 +323,7 @@ export class ControllerImpl implements Controller {
         `Don't use desktop ${this.currentDesktop}`,
         undefined,
         undefined,
+        undefined,
         -1
       );
       this.proxy.workspace().currentDesktop--;
@@ -328,8 +331,25 @@ export class ControllerImpl implements Controller {
     }
 
     for (const surf of this.screens()) {
-      this.showNotification("Group", undefined, `${surf.group}`, surf.screen);
+      const layout = this.engine.layouts.getCurrentLayout(surf);
+      this.showNotification(
+        layout.name,
+        layout.icon,
+        layout.hint,
+        `Group ${surf.group}`,
+        surf.screen
+      );
+
+      // tell kwin if any windows need to be moved to this desktop
+      for (const win of this.engine.windows.allWindowsOn(surf)) {
+        // don't set the desktop if it's already set to all desktops
+        if (win.desktop != -1) {
+          // win.window.desktop = surf.desktop;
+          win.window.surface = surf;
+        }
+      }
     }
+
     this.driver.onCurrentDesktopChanged();
     this.engine.arrange();
   }
@@ -557,6 +577,11 @@ export class ControllerImpl implements Controller {
 
     this.log.log(`kwin moved window to desktop ${window.desktop}`);
 
+    if (window.desktop == -1) {
+      // no need to do anything if it was moved to all desktops
+      return;
+    }
+
     // find what surface holds the group the window came from, if any
     let oldSurface = null;
     for (const surf of this.screens()) {
@@ -717,25 +742,50 @@ export class ControllerImpl implements Controller {
       return null;
     }
 
+    this.showNotification(`Move window to group`, undefined, `${groupId}`);
+
     return this.driver.moveWindowToGroup(groupId, window);
   }
 
   public swapGroupToSurface(groupId: number, screen: number): void {
+    const toSurface = this.screens()[screen];
+    const swapOutGroup = toSurface.group;
+
     // hide windows currently on this surface
-    for (const win of this.engine.windows.allWindowsOn(
-      this.screens()[screen]
-    )) {
+    for (const win of this.engine.windows.allWindowsOn(toSurface)) {
       win.window.hidden = true;
     }
 
-    // swap windows
-    this.driver.swapGroupToSurface(groupId, screen);
+    // find if a surface is already showing this group and needs to be swapped
+    let fromSurface: DriverSurface | null = null;
+    for (const surf of this.screens()) {
+      // don't swap with self
+      if (surf.screen == screen) {
+        continue;
+      }
+      if (this.screens()[surf.screen].group == groupId) {
+        fromSurface = surf;
+        break;
+      }
+    }
+
+    if (fromSurface) {
+      this.log.log(
+        `swapping screen ${screen} group ${swapOutGroup} with screen ${fromSurface.screen} group ${groupId}`
+      );
+      toSurface.group = -1;
+
+      this.swapGroupToSurface(swapOutGroup, fromSurface.screen);
+    }
+
+    // otherwise just map the group to the surface
+
+    this.log.log(`setting screen ${screen} to group ${groupId}`);
+    toSurface.group = groupId;
 
     // unhide windows now on this surface
-    for (const win of this.engine.windows.allWindowsOn(
-      this.screens()[screen]
-    )) {
-      win.window.hidden = false;
+    for (const win of this.engine.windows.allWindowsOn(toSurface)) {
+      win.window.surface = toSurface;
     }
   }
 

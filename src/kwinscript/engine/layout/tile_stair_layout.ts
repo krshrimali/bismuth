@@ -36,7 +36,7 @@ export default class TabbedMasterLayout implements WindowsLayout {
   public static readonly MAX_MASTER_RATIO = 0.8;
   public static readonly id = "TabbedMasterLayout";
   public readonly classID = TabbedMasterLayout.id;
-  public readonly name = "TabbedMaster Layout";
+  public readonly name = "Tabbed-Master Layout";
   public readonly icon = "bismuth-tile";
 
   public get hint(): string {
