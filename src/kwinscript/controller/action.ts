@@ -732,7 +732,7 @@ export class SwapGroup1ToSurface extends SwapGroupToSurface {
       1,
       "swap_group_1_surface",
       "Swap Group 1 to Active Monitor",
-      "Meta+Shift+1",
+      "",
       log
     );
   }
@@ -745,7 +745,7 @@ export class SwapGroup2ToSurface extends SwapGroupToSurface {
       2,
       "swap_group_2_surface",
       "Swap Group 2 to Active Monitor",
-      "Meta+Shift+2",
+      "",
       log
     );
   }
@@ -758,7 +758,7 @@ export class SwapGroup3ToSurface extends SwapGroupToSurface {
       3,
       "swap_group_3_surface",
       "Swap Group 3 to Active Monitor",
-      "Meta+Shift+3",
+      "",
       log
     );
   }
@@ -771,7 +771,7 @@ export class SwapGroup4ToSurface extends SwapGroupToSurface {
       4,
       "swap_group_4_surface",
       "Swap Group 4 to Active Monitor",
-      "Meta+Shift+4",
+      "",
       log
     );
   }
@@ -784,7 +784,7 @@ export class SwapGroup5ToSurface extends SwapGroupToSurface {
       5,
       "swap_group_5_surface",
       "Swap Group 5 to Active Monitor",
-      "Meta+Shift+5",
+      "",
       log
     );
   }
@@ -797,7 +797,7 @@ export class SwapGroup6ToSurface extends SwapGroupToSurface {
       6,
       "swap_group_6_surface",
       "Swap Group 6 to Active Monitor",
-      "Meta+Shift+6",
+      "",
       log
     );
   }
@@ -810,7 +810,7 @@ export class SwapGroup7ToSurface extends SwapGroupToSurface {
       7,
       "swap_group_7_surface",
       "Swap Group 7 to Active Monitor",
-      "Meta+Shift+7",
+      "",
       log
     );
   }
@@ -823,7 +823,7 @@ export class SwapGroup8ToSurface extends SwapGroupToSurface {
       8,
       "swap_group_8_surface",
       "Swap Group 8 to Active Monitor",
-      "Meta+Shift+8",
+      "",
       log
     );
   }
@@ -836,7 +836,7 @@ export class SwapGroup9ToSurface extends SwapGroupToSurface {
       9,
       "swap_group_9_surface",
       "Swap Group 9 to Active Monitor",
-      "Meta+Shift+9",
+      "",
       log
     );
   }
@@ -849,7 +849,7 @@ export class SwapGroup10ToSurface extends SwapGroupToSurface {
       10,
       "swap_group_10_surface",
       "Swap Group 10 to Active Monitor",
-      "Meta+Shift+0",
+      "",
       log
     );
   }
@@ -862,7 +862,7 @@ export class SwapGroup11ToSurface extends SwapGroupToSurface {
       11,
       "swap_group_11_surface",
       "Swap Group 11 to Active Monitor",
-      "Meta+Hyper+1",
+      "",
       log
     );
   }
@@ -875,7 +875,7 @@ export class SwapGroup12ToSurface extends SwapGroupToSurface {
       12,
       "swap_group_12_surface",
       "Swap Group 12 to Active Monitor",
-      "Meta+Hyper+2",
+      "",
       log
     );
   }
@@ -888,7 +888,7 @@ export class SwapGroup13ToSurface extends SwapGroupToSurface {
       13,
       "swap_group_13_surface",
       "Swap Group 13 to Active Monitor",
-      "Meta+Hyper+3",
+      "",
       log
     );
   }
@@ -901,7 +901,7 @@ export class SwapGroup14ToSurface extends SwapGroupToSurface {
       14,
       "swap_group_14_surface",
       "Swap Group 14 to Active Monitor",
-      "Meta+Hyper+4",
+      "",
       log
     );
   }
@@ -914,7 +914,7 @@ export class SwapGroup15ToSurface extends SwapGroupToSurface {
       15,
       "swap_group_15_surface",
       "Swap Group 15 to Active Monitor",
-      "Meta+Hyper+5",
+      "",
       log
     );
   }
@@ -927,7 +927,7 @@ export class SwapGroup16ToSurface extends SwapGroupToSurface {
       16,
       "swap_group_16_surface",
       "Swap Group 16 to Active Monitor",
-      "Meta+Hyper+6",
+      "",
       log
     );
   }
@@ -940,7 +940,7 @@ export class SwapGroup17ToSurface extends SwapGroupToSurface {
       17,
       "swap_group_17_surface",
       "Swap Group 17 to Active Monitor",
-      "Meta+Hyper+7",
+      "",
       log
     );
   }
@@ -953,7 +953,7 @@ export class SwapGroup18ToSurface extends SwapGroupToSurface {
       18,
       "swap_group_18_surface",
       "Swap Group 18 to Active Monitor",
-      "Meta+Hyper+8",
+      "",
       log
     );
   }
@@ -966,7 +966,7 @@ export class SwapGroup19ToSurface extends SwapGroupToSurface {
       19,
       "swap_group_19_surface",
       "Swap Group 19 to Active Monitor",
-      "Meta+Hyper+9",
+      "",
       log
     );
   }
@@ -979,7 +979,7 @@ export class SwapGroup20ToSurface extends SwapGroupToSurface {
       20,
       "swap_group_20_surface",
       "Swap Group 20 to Active Monitor",
-      "Meta+Hyper+0",
+      "",
       log
     );
   }
@@ -1009,7 +1009,7 @@ export class ChangeWindowToGroup1 extends ChangeWindowToGroup {
       1,
       "change_window_group_1",
       "Send Active Window to Group 1",
-      "Meta+Ctrl+1",
+      "",
       log
     );
   }
@@ -1022,7 +1022,7 @@ export class ChangeWindowToGroup2 extends ChangeWindowToGroup {
       2,
       "change_window_group_2",
       "Send Active Window to Group 2",
-      "Meta+Ctrl+2",
+      "",
       log
     );
   }
@@ -1035,7 +1035,7 @@ export class ChangeWindowToGroup3 extends ChangeWindowToGroup {
       3,
       "change_window_group_3",
       "Send Active Window to Group 3",
-      "Meta+Ctrl+3",
+      "",
       log
     );
   }
@@ -1048,7 +1048,7 @@ export class ChangeWindowToGroup4 extends ChangeWindowToGroup {
       4,
       "change_window_group_4",
       "Send Active Window to Group 4",
-      "Meta+Ctrl+4",
+      "",
       log
     );
   }
@@ -1061,7 +1061,7 @@ export class ChangeWindowToGroup5 extends ChangeWindowToGroup {
       5,
       "change_window_group_5",
       "Send Active Window to Group 5",
-      "Meta+Ctrl+5",
+      "",
       log
     );
   }
@@ -1074,7 +1074,7 @@ export class ChangeWindowToGroup6 extends ChangeWindowToGroup {
       6,
       "change_window_group_6",
       "Send Active Window to Group 6",
-      "Meta+Ctrl+6",
+      "",
       log
     );
   }
@@ -1087,7 +1087,7 @@ export class ChangeWindowToGroup7 extends ChangeWindowToGroup {
       7,
       "change_window_group_7",
       "Send Active Window to Group 7",
-      "Meta+Ctrl+7",
+      "",
       log
     );
   }
@@ -1100,7 +1100,7 @@ export class ChangeWindowToGroup8 extends ChangeWindowToGroup {
       8,
       "change_window_group_8",
       "Send Active Window to Group 8",
-      "Meta+Ctrl+8",
+      "",
       log
     );
   }
@@ -1113,7 +1113,7 @@ export class ChangeWindowToGroup9 extends ChangeWindowToGroup {
       9,
       "change_window_group_9",
       "Send Active Window to Group 9",
-      "Meta+Ctrl+9",
+      "",
       log
     );
   }
@@ -1126,7 +1126,7 @@ export class ChangeWindowToGroup10 extends ChangeWindowToGroup {
       10,
       "change_window_group_10",
       "Send Active Window to Group 10",
-      "Meta+Ctrl+0",
+      "",
       log
     );
   }
@@ -1139,7 +1139,7 @@ export class ChangeWindowToGroup11 extends ChangeWindowToGroup {
       11,
       "change_window_group_11",
       "Send Active Window to Group 11",
-      "Hyper+Ctrl+1",
+      "",
       log
     );
   }
@@ -1152,7 +1152,7 @@ export class ChangeWindowToGroup12 extends ChangeWindowToGroup {
       12,
       "change_window_group_12",
       "Send Active Window to Group 12",
-      "Hyper+Ctrl+2",
+      "",
       log
     );
   }
@@ -1165,7 +1165,7 @@ export class ChangeWindowToGroup13 extends ChangeWindowToGroup {
       13,
       "change_window_group_13",
       "Send Active Window to Group 13",
-      "Hyper+Ctrl+3",
+      "",
       log
     );
   }
@@ -1178,7 +1178,7 @@ export class ChangeWindowToGroup14 extends ChangeWindowToGroup {
       14,
       "change_window_group_14",
       "Send Active Window to Group 14",
-      "Hyper+Ctrl+4",
+      "",
       log
     );
   }
@@ -1191,7 +1191,7 @@ export class ChangeWindowToGroup15 extends ChangeWindowToGroup {
       15,
       "change_window_group_15",
       "Send Active Window to Group 15",
-      "Hyper+Ctrl+5",
+      "",
       log
     );
   }
@@ -1204,7 +1204,7 @@ export class ChangeWindowToGroup16 extends ChangeWindowToGroup {
       16,
       "change_window_group_16",
       "Send Active Window to Group 16",
-      "Hyper+Ctrl+6",
+      "",
       log
     );
   }
@@ -1217,7 +1217,7 @@ export class ChangeWindowToGroup17 extends ChangeWindowToGroup {
       17,
       "change_window_group_17",
       "Send Active Window to Group 17",
-      "Hyper+Ctrl+7",
+      "",
       log
     );
   }
@@ -1230,7 +1230,7 @@ export class ChangeWindowToGroup18 extends ChangeWindowToGroup {
       18,
       "change_window_group_18",
       "Send Active Window to Group 18",
-      "Hyper+Ctrl+8",
+      "",
       log
     );
   }
@@ -1243,7 +1243,7 @@ export class ChangeWindowToGroup19 extends ChangeWindowToGroup {
       19,
       "change_window_group_19",
       "Send Active Window to Group 19",
-      "Hyper+Ctrl+9",
+      "",
       log
     );
   }
@@ -1256,7 +1256,7 @@ export class ChangeWindowToGroup20 extends ChangeWindowToGroup {
       20,
       "change_window_group_20",
       "Send Active Window to Group 20",
-      "Hyper+Ctrl+0",
+      "",
       log
     );
   }
