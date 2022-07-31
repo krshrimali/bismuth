@@ -34,7 +34,7 @@ class Controller : public QObject
 {
     Q_OBJECT
 public:
-    Controller(PlasmaApi::Api &, Engine &, const Bismuth::Config &);
+    Controller(PlasmaApi::Api &, Engine &, Bismuth::Config &);
 
     void bindEvents();
     void registerShortcuts();
@@ -59,7 +59,7 @@ private:
     PlasmaApi::Api &m_plasmaApi;
     TSProxy *m_proxy;
     Engine &m_engine;
-    const Config &m_config;
+    Config &m_config;
 };
 
 }

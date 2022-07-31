@@ -22,7 +22,7 @@
 
 namespace Bismuth
 {
-Controller::Controller(PlasmaApi::Api &api, Engine &engine, const Bismuth::Config &config)
+Controller::Controller(PlasmaApi::Api &api, Engine &engine, Bismuth::Config &config)
     : m_plasmaApi(api)
     , m_proxy()
     , m_engine(engine)
@@ -170,7 +170,7 @@ void Controller::registerShortcuts()
     });
     addShortcut("toggle_three_column_layout", "Toggle Three Column Layout", "Meta+C", [=]() {
         qDebug(Bi) << "Triggering the signal for 3 column layout";
-        m_config.setEnableThreeColumnLayout(/*v=*/ true);
+        m_config.setEnableThreeColumnLayout(/*v=*/true);
         qDebug(Bi) << "Toggle Three Column Layout Triggered!";
     });
 
