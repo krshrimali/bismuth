@@ -274,8 +274,6 @@ export class ControllerImpl implements Controller {
         }
       }
     }
-
-    this.engine.arrange()
   }
 
   public onWindowRemoved(window: EngineWindow): void {
@@ -296,17 +294,12 @@ export class ControllerImpl implements Controller {
     this.engine.arrange()
   }
 
-  public onWindowMoveStart(_window: EngineWindow): void {
-    /* do nothing */
+  public onWindowMoveStart(window: EngineWindow): void {
+    this.log.log(['onWindowMoveStart', { window }])
   }
 
-  public onWindowMove(_window: EngineWindow): void {
-    /* do nothing */
-  }
-
-  public onWindowMoveOver(window: EngineWindow): void {
-    this.log.log(['onWindowMoveOver', { window }])
-
+  public onWindowMove(window: EngineWindow): void {
+    /* update the window position in the layout */
     /* swap window by dragging */
     if (window.state === WindowState.Tiled) {
       const tiles = this.engine.windows.visibleTiledWindowsOn(
@@ -320,13 +313,19 @@ export class ControllerImpl implements Controller {
       )
 
       if (targets.length === 1) {
-        this.engine.windows.swap(window, targets[0])
+        if (this.config.mouseDragInsert) {
+          this.engine.windows.move(window, targets[0])
+        } else {
+          this.engine.windows.swap(window, targets[0])
+        }
         this.engine.arrange()
         return
       }
     }
+  }
 
-    /* ... or float window */
+  public onWindowMoveOver(window: EngineWindow): void {
+    /* float window if it was dropped far from a tile */
     if (this.config.untileByDragging) {
       if (window.state === WindowState.Tiled) {
         const diff = window.actualGeometry.subtract(window.geometry)
@@ -342,7 +341,7 @@ export class ControllerImpl implements Controller {
       }
     }
 
-    /* ... or return to the previous position */
+    /* move the window to its current position in the layout */
     window.commit()
   }
 

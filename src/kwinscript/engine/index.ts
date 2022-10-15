@@ -311,12 +311,20 @@ export class EngineImpl implements Engine {
   }
 
   public arrange(): void {
-    this.log.log('arrange')
+    /* Try to avoid calling this; use arrangeScreen and commitArrangement on
+    specific surfaces instead */
+    this.log.log('someone called global arrange')
+
+    if (!this.controller.currentActivity || !this.controller.currentDesktop) {
+      return
+    }
 
     this.controller
       .screens(this.controller.currentActivity, this.controller.currentDesktop)
-      .forEach((driverSurface: DriverSurface) => {
-        this.arrangeScreen(driverSurface)
+      .forEach((surf: DriverSurface) => {
+        this.log.log(`arranging surface: ${surf.id}`)
+        this.arrangeScreen(surf)
+        this.commitArrangement(surf)
       })
   }
 
@@ -325,7 +333,7 @@ export class EngineImpl implements Engine {
    *
    * @param screenSurface screen's surface, on which windows should be arranged
    */
-  public arrangeScreen(screenSurface: DriverSurface): void {
+  private arrangeScreen(screenSurface: DriverSurface): void {
     const layout = this.layouts.getCurrentLayout(screenSurface)
 
     const workingArea = screenSurface.workingArea
@@ -371,9 +379,23 @@ export class EngineImpl implements Engine {
         })
     }
 
-    // Commit window assigned properties
-    visibleWindows.forEach((win: EngineWindow) => win.commit())
+    // // Commit window assigned properties
+    // visibleWindows.forEach((win: EngineWindow) => win.commit())
     this.log.log(['arrangeScreen/finished', { screenSurface }])
+  }
+
+  /**
+   * Push the arrangement to kwin to commit any changes
+   * @param surface Windows on this surface will be committed
+   */
+  private commitArrangement(surface: DriverSurface): void {
+    // Commit window assigned properties
+    const visibleWindows = this.windows.visibleWindowsOn(surface)
+
+    visibleWindows.forEach((win: EngineWindow) => {
+      this.log.log(`committing: ${win}`)
+      visibleWindows.forEach((win: EngineWindow) => win.commit())
+    })
   }
 
   public currentLayoutOnCurrentSurface(): WindowsLayout {
@@ -453,7 +475,13 @@ export class EngineImpl implements Engine {
       return
     }
 
-    const neighbor = this.getNeighborByDirection(window.geometry, dir)
+    const neighbor = this.config.moveBetweenSurfaces
+      ? this.getNeighborByDirection(window.geometry, dir)
+      : this.getNeighborByDirection(
+          window.geometry,
+          dir,
+          this.controller.currentSurface
+        )
     if (neighbor) {
       this.controller.currentWindow = neighbor
     }
@@ -490,8 +518,56 @@ export class EngineImpl implements Engine {
     }
 
     const neighbor = this.getNeighborByDirection(window.geometry, dir)
-    if (neighbor) {
-      this.windows.swap(window, neighbor)
+    this.log.log(`found swap neighbor ${neighbor}`)
+
+    if (neighbor && neighbor.surface.id == window.surface.id) {
+      this.log.log(`swapping with neighbor on same surface ${window.surface}`)
+
+      const iBefore = this.windows
+        .visibleWindowsOn(window.surface)
+        .indexOf(window)
+      this.windows.move(window, neighbor)
+      const iAfter = this.windows
+        .visibleWindowsOn(window.surface)
+        .indexOf(window)
+      if (iBefore == iAfter) {
+        this.windows.swap(window, neighbor)
+      }
+      return
+    } else if (!this.config.moveBetweenSurfaces) {
+      return
+    }
+
+    const screenCandidates = this.controller
+      .screens()
+      .filter((surface) => surface.id != window.surface.id)
+
+    const closestSurface = this.findClosestSurface(
+      window,
+      dir,
+      screenCandidates
+    )
+
+    if (neighbor && closestSurface && closestSurface == neighbor.surface) {
+      this.log.log(`moving to neighbor on surface ${neighbor.surface}`)
+
+      /* arrange the window into the new layout before picking which tile is
+      closest, else we might pick a location that seems sensible now but
+      doesn't seem sensible after the layout rearranges with the new window */
+
+      const oldWindowPosition = window.geometry
+      window.window.surface = neighbor.surface
+      this.arrangeScreen(window.window.surface)
+
+      const closestSlot = this.getNeighborByDirection(oldWindowPosition, dir)
+      if (!closestSlot) {
+        return
+      }
+
+      this.windows.move(window, closestSlot)
+    } else if (closestSurface) {
+      this.log.log(`moving to empty screen ${closestSurface}`)
+      this.controller.moveWindowToSurface(window, closestSurface)
     }
   }
 

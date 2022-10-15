@@ -370,9 +370,9 @@ export class DriverImpl implements Driver {
     })
 
     this.connect(client.frameGeometryChanged, () => {
-      if (moving) {
+      if (moving || client.move) {
         this.controller.onWindowMove(window)
-      } else if (resizing) {
+      } else if (resizing || client.resize) {
         this.controller.onWindowResize(window)
       } else {
         if (!window.actualGeometry.equals(window.geometry)) {

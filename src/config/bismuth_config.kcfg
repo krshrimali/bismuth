@@ -113,6 +113,11 @@
       <default>true</default>
     </entry>
 
+    <entry name="moveBetweenSurfaces" type="Bool">
+      <label>Allow movement across screen boundries.</label>
+      <default>true</default>
+    </entry>
+
     <entry name="monocleMinimizeRest" type="Bool">
       <label>Minimize other tiles than the current one in Monocle layout</label>
       <default>false</default>
@@ -175,6 +180,11 @@
 
     <entry name="newWindowAsMaster" type="Bool">
       <label>Put new window as master</label>
+      <default>false</default>
+    </entry>
+
+    <entry name="mouseDragInsert" type="Bool">
+      <label>Dragging to move windows inserts instead of swapping</label>
       <default>false</default>
     </entry>
 

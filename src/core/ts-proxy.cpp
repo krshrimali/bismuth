@@ -74,6 +74,8 @@ QJSValue TSProxy::jsConfig()
     setProp("tileLayoutGap", m_config.tileLayoutGap());
 
     setProp("newWindowAsMaster", m_config.newWindowAsMaster());
+    setProp("moveBetweenSurfaces", m_config.moveBetweenSurfaces());
+    setProp("mouseDragInsert", m_config.mouseDragInsert());
     setProp("layoutPerActivity", m_config.layoutPerActivity());
     setProp("layoutPerDesktop", m_config.layoutPerDesktop());
 
