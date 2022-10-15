@@ -4,52 +4,54 @@
 // SPDX-License-Identifier: MIT
 
 export interface Config {
-  experimentalBackend: boolean;
+  experimentalBackend: boolean
 
   //#region Layout
-  layoutOrder: string[];
-  monocleMaximize: boolean;
-  maximizeSoleTile: boolean;
-  monocleMinimizeRest: boolean; // KWin-specific
-  untileByDragging: boolean;
+  layoutOrder: string[]
+  monocleMaximize: boolean
+  maximizeSoleTile: boolean
+  monocleMinimizeRest: boolean // KWin-specific
+  untileByDragging: boolean
   //#endregion
 
   //#region Features
-  keepFloatAbove: boolean;
-  noTileBorder: boolean;
-  limitTileWidthRatio: number;
+  keepFloatAbove: boolean
+  noTileBorder: boolean
+  limitTileWidthRatio: number
   //#endregion
 
   //#region Gap
-  screenGapBottom: number;
-  screenGapLeft: number;
-  screenGapRight: number;
-  screenGapTop: number;
-  tileLayoutGap: number;
+  screenGapBottom: number
+  screenGapLeft: number
+  screenGapRight: number
+  screenGapTop: number
+  tileLayoutGap: number
   //#endregion
 
   //#region Behavior
-  newWindowAsMaster: boolean;
+  newWindowSpawnLocation: string
+  moveBetweenSurfaces: boolean
+  mouseDragInsert: boolean
   //#endregion
 
   //#region KWin-specific
-  layoutPerActivity: boolean;
-  layoutPerDesktop: boolean;
-  preventMinimize: boolean;
-  preventProtrusion: boolean;
-  pollMouseXdotool: boolean;
+  layoutPerActivity: boolean
+  layoutPerDesktop: boolean
+  preventMinimize: boolean
+  preventProtrusion: boolean
+  pollMouseXdotool: boolean
   //#endregion
 
   //#region KWin-specific Rules
-  floatUtility: boolean;
+  floatUtility: boolean
 
-  floatingClass: string[];
-  floatingTitle: string[];
-  ignoreClass: string[];
-  ignoreTitle: string[];
-  ignoreRole: string[];
+  floatingClass: string[]
+  floatingTitle: string[]
+  ignoreClass: string[]
+  ignoreTitle: string[]
+  ignoreRole: string[]
 
-  ignoreActivity: string[];
-  ignoreScreen: number[];
+  ignoreActivity: string[]
+  ignoreScreen: number[]
   //#endregion
 }

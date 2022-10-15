@@ -3,18 +3,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Engine, EngineImpl } from "../engine";
-import { EngineWindow } from "../engine/window";
-import { WindowState } from "../engine/window";
+import { Engine, EngineImpl } from '../engine'
+import { EngineWindow } from '../engine/window'
+import { WindowState } from '../engine/window'
 
-import { Driver, DriverImpl } from "../driver";
-import { DriverSurface } from "../driver/surface";
+import { Driver, DriverImpl } from '../driver'
+import { DriverSurface } from '../driver/surface'
 
-import { Config } from "../config";
-import { Log } from "../util/log";
+import { Config } from '../config'
+import { Log } from '../util/log'
 
-import * as Action from "./action";
-import { TSProxy } from "../extern/proxy";
+import * as Action from './action'
+import { TSProxy } from '../extern/proxy'
 
 /**
  * Entry point of the script (apart from QML). Handles the user input (shortcuts)
@@ -28,16 +28,26 @@ export interface Controller {
   /**
    * A bunch of surfaces, that represent the user's screens.
    */
-  readonly screens: DriverSurface[];
+  screens(activity?: string, desktop?: number): DriverSurface[]
   /**
    * Current active window. In other words the window, that has focus.
    */
-  currentWindow: EngineWindow | null;
+  currentWindow: EngineWindow | null
 
   /**
    * Current screen. In other words the screen, that has focus.
    */
-  currentSurface: DriverSurface;
+  currentSurface: DriverSurface
+
+  /**
+   * Currently active activity
+   */
+  currentActivity: string
+
+  /**
+   * Currently active desktop
+   */
+  currentDesktop: number
 
   /**
    * Show a popup notification in the center of the screen.
@@ -45,29 +55,36 @@ export interface Controller {
    * @param icon an optional name of the icon to display in the pop-up.
    * @param hint an optional string displayed beside the main text.
    */
-  showNotification(text: string, icon?: string, hint?: string): void;
+  showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void
 
   /**
    * React to screen focus change
    */
-  onCurrentSurfaceChanged(): void;
+  onCurrentSurfaceChanged(): void
+  onCurrentActivityChanged(): void
+  onCurrentDesktopChanged(): void
 
   /**
    * React to screen update. For example, when the new screen has connected.
    */
-  onSurfaceUpdate(): void;
+  onSurfaceUpdate(): void
 
   /**
    * React to window geometry update
    * @param window the window whose geometry has changed
    */
-  onWindowGeometryChanged(window: EngineWindow): void;
+  onWindowGeometryChanged(window: EngineWindow): void
 
   /**
    * React to window resizing
    * @param window the window which is resized
    */
-  onWindowResize(window: EngineWindow): void;
+  onWindowResize(window: EngineWindow): void
 
   /**
    * React to window resize operation start. The window
@@ -75,13 +92,19 @@ export interface Controller {
    * the window with the mouse by the window edges.
    * @param window the window which is being resized
    */
-  onWindowResizeStart(window: EngineWindow): void;
+  onWindowResizeStart(window: EngineWindow): void
 
   /**
    * React to window changing screens
    * @param window the window whose screen has changed
    */
-  onWindowScreenChanged(window: EngineWindow): void;
+  onWindowScreenChanged(
+    window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void
+
+  onWindowActivityChanged(window: EngineWindow): void
+  onWindowDesktopChanged(window: EngineWindow): void
 
   /**
    * React to window resize operation end. The window
@@ -89,35 +112,35 @@ export interface Controller {
    * the window.
    * @param window the window which was dropped
    */
-  onWindowResizeOver(window: EngineWindow): void;
+  onWindowResizeOver(window: EngineWindow): void
 
   /**
    * React to window addition
    * @param window new added window
    */
-  onWindowAdded(window: EngineWindow): void;
+  onWindowAdded(window: EngineWindow): void
 
   /**
    * React to window removal
    * @param window the window which was removed
    */
-  onWindowRemoved(window: EngineWindow): void;
+  onWindowRemoved(window: EngineWindow): void
 
   /**
    * React to window maximization state change
    * @param window the window whose maximization state changed
    * @param maximized new maximization state
    */
-  onWindowMaximizeChanged(window: EngineWindow, maximized: boolean): void;
+  onWindowMaximizeChanged(window: EngineWindow, maximized: boolean): void
 
   // TODO: add docs
-  onWindowChanged(window: EngineWindow | null, comment?: string): void;
+  onWindowChanged(window: EngineWindow | null, comment?: string): void
 
   /**
    * React to window being moved.
    * @param window the window, which it being moved.
    */
-  onWindowMove(window: EngineWindow): void;
+  onWindowMove(window: EngineWindow): void
 
   /**
    * React to window move operation start. The move operation starts
@@ -125,7 +148,7 @@ export interface Controller {
    * the mouse's button being pressed
    * @param window the window which is being dragged
    */
-  onWindowMoveStart(window: EngineWindow): void;
+  onWindowMoveStart(window: EngineWindow): void
 
   /**
    * React to window move operation over. The move operation ends
@@ -133,36 +156,45 @@ export interface Controller {
    * the mouse's button being released.
    * @param window the window which was being dragged
    */
-  onWindowMoveOver(window: EngineWindow): void;
+  onWindowMoveOver(window: EngineWindow): void
 
   /**
    * React to the window gaining focus, attention and love it deserves ❤️
    * @param window the window which received the focus
    */
-  onWindowFocused(window: EngineWindow): void;
+  onWindowFocused(window: EngineWindow): void
 
   /**
    * React to the window shade state change
    * @param window the window whose state was changed
    */
-  onWindowShadeChanged(window: EngineWindow): void;
+  onWindowShadeChanged(window: EngineWindow): void
 
   /**
    * Ask engine to manage the window
    * @param win the window which needs to be managed.
    */
-  manageWindow(win: EngineWindow): void;
+  manageWindow(win: EngineWindow): void
+
+  restoreWindows(windows: EngineWindow[]): void
 
   /**
    * The function is called when the script is destroyed.
    * In particular, it's called by QML Component.onDestroyed
    */
-  drop(): void;
+  drop(): void
+
+  /**
+   * Move a window to a different surface
+   * @param window the window to be moved to @param surface
+   * @param surface the surface to move @param window to
+   */
+  moveWindowToSurface(window: EngineWindow, surface: DriverSurface): void
 }
 
 export class ControllerImpl implements Controller {
-  private engine: Engine;
-  private driver: Driver;
+  private engine: Engine
+  private driver: Driver
   public constructor(
     qmlObjects: Bismuth.Qml.Main,
     kwinApi: KWin.Api,
@@ -170,143 +202,205 @@ export class ControllerImpl implements Controller {
     private log: Log,
     private proxy: TSProxy
   ) {
-    this.engine = new EngineImpl(this, config, log);
-    this.driver = new DriverImpl(qmlObjects, kwinApi, this, config, log, proxy);
+    this.engine = new EngineImpl(this, config, proxy, log)
+    this.driver = new DriverImpl(qmlObjects, kwinApi, this, config, log, proxy)
   }
 
   /**
    * Entry point: start tiling window management
    */
   public start(): void {
-    this.driver.bindEvents();
-    this.bindShortcuts();
+    this.driver.bindEvents()
+    this.bindShortcuts()
 
-    this.driver.manageWindows();
+    this.driver.manageWindows()
 
-    this.engine.arrange();
+    this.engine.arrange()
   }
 
-  public get screens(): DriverSurface[] {
-    return this.driver.screens;
+  public screens(activity?: string, desktop?: number): DriverSurface[] {
+    if (typeof activity === 'undefined' && this.currentActivity) {
+      activity = this.currentActivity
+    } else if (typeof activity === 'undefined') {
+      return []
+    }
+
+    if (typeof desktop === 'undefined' && this.currentDesktop) {
+      desktop = this.currentDesktop
+    } else if (typeof desktop === 'undefined') {
+      return []
+    }
+
+    return this.driver.screens(activity, desktop)
   }
 
   public get currentWindow(): EngineWindow | null {
-    return this.driver.currentWindow;
+    return this.driver.currentWindow
   }
 
   public set currentWindow(value: EngineWindow | null) {
-    this.driver.currentWindow = value;
+    this.driver.currentWindow = value
   }
 
   public get currentSurface(): DriverSurface {
-    return this.driver.currentSurface;
+    return this.driver.currentSurface
+  }
+
+  public get currentActivity(): string {
+    return this.driver.currentActivity
+  }
+
+  public get currentDesktop(): number {
+    return this.driver.currentDesktop
   }
 
   public set currentSurface(value: DriverSurface) {
-    this.driver.currentSurface = value;
+    this.driver.currentSurface = value
   }
 
-  public showNotification(text: string, icon?: string, hint?: string): void {
-    this.driver.showNotification(text, icon, hint);
+  public showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void {
+    if (screen === -1) {
+      // all screens
+      for (const surf of this.screens()) {
+        this.driver.showNotification(text, icon, hint, surf.screen)
+      }
+      return
+    } else if (screen === undefined) {
+      // current screen
+      screen = this.currentSurface.screen
+    }
+    // specified screen
+    this.driver.showNotification(text, icon, hint, screen)
   }
 
   public onSurfaceUpdate(): void {
-    this.engine.arrange();
+    this.engine.arrange()
   }
 
   public onCurrentSurfaceChanged(): void {
-    this.log.log(["onCurrentSurfaceChanged", { srf: this.currentSurface }]);
-    this.engine.arrange();
+    this.log.log(['onCurrentSurfaceChanged', { srf: this.currentSurface }])
+    this.engine.arrange(this.currentSurface)
   }
 
   public onWindowAdded(window: EngineWindow): void {
-    this.log.log(["onWindowAdded", { window }]);
-    this.engine.manage(window);
+    this.log.log(['onWindowAdded', { window }])
+    this.engine.manage(window)
+    this.engine.arrange(window.surface)
 
-    /* move window to next surface if the current surface is "full" */
-    if (window.tileable) {
-      const srf = this.currentSurface;
-      const tiles = this.engine.windows.visibleTiledWindowsOn(srf);
-      const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity;
-      if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
-        const nextSurface = this.currentSurface.next();
-        if (nextSurface) {
-          // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
-          window.surface = nextSurface;
-          this.currentSurface = nextSurface;
-        }
-      }
-    }
+    // /* move window to next surface if the current surface is "full" */
+    // if (window.tileable) {
+    //   const srf = this.currentSurface
+    //   const tiles = this.engine.windows.visibleTiledWindowsOn(srf)
+    //   const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity
+    //   if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
+    //     const nextSurface = this.currentSurface.next()
+    //     if (nextSurface) {
+    //       // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
+    //       window.surface = nextSurface
+    //       this.currentSurface = nextSurface
+    //     }
+    //   }
+    // }
+  }
 
-    this.engine.arrange();
+  public onCurrentActivityChanged(): void {
+    this.log.log(['onCurrentActivityChanged', { srf: this.currentSurface }])
+    this.engine.arrange()
+  }
+
+  public onCurrentDesktopChanged(): void {
+    this.log.log('onCurrentDesktopChanged')
+    // TODO: @krshrimali
+    // if (this.currentDesktop == this.kwinApi.workspace.desktops) {
+    //   this.log.log(`tried to access hidden desktop ${this.currentDesktop}`)
+    //   this.showNotification(`Desktop ${this.currentDesktop} forbidden`)
+    //   this.kwinApi.workspace.currentDesktop--
+    //   return
+    // }
+    // for (const surf of this.screens()) {
+    //   this.showNotification('Group', undefined, `${surf.group}`, surf.screen)
+    // }
+    this.showNotification(
+      `Desktop ${this.currentDesktop} is forbidden`,
+      undefined,
+      undefined,
+      -1
+    )
+    this.driver.onCurrentDesktopChanged()
+    this.engine.arrange()
   }
 
   public onWindowRemoved(window: EngineWindow): void {
-    this.log.log(`[Controller#onWindowRemoved] Window removed: ${window}`);
+    this.log.log(`[Controller#onWindowRemoved] Window removed: ${window}`)
 
-    this.engine.unmanage(window);
+    this.engine.unmanage(window)
 
     if (this.engine.isLayoutMonocleAndMinimizeRest()) {
       // Switch to the next window if needed
       if (!this.currentWindow) {
         this.log.log(
           `[Controller#onWindowRemoved] Switching to the minimized window`
-        );
-        this.engine.focusOrder(1, true);
+        )
+        this.engine.focusOrder(1, true)
       }
     }
-
-    this.engine.arrange();
   }
 
-  public onWindowMoveStart(_window: EngineWindow): void {
-    /* do nothing */
+  public onWindowMoveStart(window: EngineWindow): void {
+    this.log.log(['onWindowMoveStart', { window }])
   }
 
-  public onWindowMove(_window: EngineWindow): void {
-    /* do nothing */
-  }
-
-  public onWindowMoveOver(window: EngineWindow): void {
-    this.log.log(["onWindowMoveOver", { window }]);
-
+  public onWindowMove(window: EngineWindow): void {
+    /* update the window position in the layout */
     /* swap window by dragging */
     if (window.state === WindowState.Tiled) {
       const tiles = this.engine.windows.visibleTiledWindowsOn(
         this.currentSurface
-      );
-      const windowCenter = window.actualGeometry.center;
+      )
+      const windowCenter = window.actualGeometry.center
 
       const targets = tiles.filter(
         (tile) =>
           tile !== window && tile.actualGeometry.includesPoint(windowCenter)
-      );
+      )
 
       if (targets.length === 1) {
-        this.engine.windows.swap(window, targets[0]);
-        this.engine.arrange();
-        return;
+        if (this.config.mouseDragInsert) {
+          this.engine.windows.move(window, targets[0])
+        } else {
+          this.engine.windows.swap(window, targets[0])
+        }
+        this.engine.saveWindows()
+        this.engine.arrange(window.surface)
+        return
       }
     }
+  }
 
-    /* ... or float window */
+  public onWindowMoveOver(window: EngineWindow): void {
+    /* float window if it was dropped far from a tile */
     if (this.config.untileByDragging) {
       if (window.state === WindowState.Tiled) {
-        const diff = window.actualGeometry.subtract(window.geometry);
-        const distance = Math.sqrt(diff.x ** 2 + diff.y ** 2);
+        const diff = window.actualGeometry.subtract(window.geometry)
+        const distance = Math.sqrt(diff.x ** 2 + diff.y ** 2)
         // TODO: arbitrary constant
         if (distance > 30) {
-          window.floatGeometry = window.actualGeometry;
-          window.state = WindowState.Floating;
-          this.engine.arrange();
-          this.engine.showNotification("Window Untiled");
-          return;
+          window.floatGeometry = window.actualGeometry
+          window.state = WindowState.Floating
+          this.engine.arrange(window.surface)
+          this.engine.showNotification('Window Untiled')
+          return
         }
       }
     }
 
-    /* ... or return to the previous position */
-    window.commit();
+    /* move the window to its current position in the layout */
+    window.commit()
   }
 
   public onWindowResizeStart(_window: EngineWindow): void {
@@ -314,22 +408,22 @@ export class ControllerImpl implements Controller {
   }
 
   public onWindowResize(win: EngineWindow): void {
-    this.log.log(`[Controller#onWindowResize] Window is resizing: ${win}`);
+    this.log.log(`[Controller#onWindowResize] Window is resizing: ${win}`)
 
     if (win.state === WindowState.Tiled) {
-      this.engine.adjustLayout(win);
-      this.engine.arrange();
+      this.engine.adjustLayout(win)
+      this.engine.arrange(win.surface)
     }
   }
 
   public onWindowResizeOver(win: EngineWindow): void {
     this.log.log(
       `[Controller#onWindowResizeOver] Window resize is over: ${win}`
-    );
+    )
 
     if (win.tiled) {
-      this.engine.adjustLayout(win);
-      this.engine.arrange();
+      this.engine.adjustLayout(win)
+      this.engine.arrange(win.surface)
     }
   }
 
@@ -337,62 +431,102 @@ export class ControllerImpl implements Controller {
     _window: EngineWindow,
     _maximized: boolean
   ): void {
-    this.engine.arrange();
+    this.engine.arrange(_window.surface)
   }
 
   public onWindowGeometryChanged(window: EngineWindow): void {
-    this.log.log(["onWindowGeometryChanged", { window }]);
+    this.log.log(['onWindowGeometryChanged', { window }])
   }
 
-  public onWindowScreenChanged(_window: EngineWindow): void {
+  public onWindowScreenChanged(
+    _window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void {
     //TODO only arrange the surface the window came from and went to
-    this.engine.arrange();
+    if (!_window.surface) {
+      return
+    }
+    // this.moveWindowToSurface(_window, _window.surface)
+    if (oldSurface) {
+      this.engine.arrange(oldSurface)
+    }
+    this.engine.arrange(_window.surface)
+  }
+
+  public onWindowActivityChanged(window: EngineWindow): void {
+    this.log.log('onWindowActivityChanged')
+    if (!window.screen) {
+      return
+    }
+    this.engine.arrange(this.screens()[window.screen])
+    // this.moveWindowToSurface(window, window.surface);
+  }
+
+  public onWindowDesktopChanged(window: EngineWindow): void {
+    this.log.log('onWindowDesktopChanged')
+    if (!window.screen) {
+      return
+    }
+    this.engine.arrange(this.screens()[window.screen])
+    // this.moveWindowToSurface(window, window.surface);
   }
 
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack
   // by itself anyway.
   public onWindowChanged(window: EngineWindow | null, comment?: string): void {
     if (window) {
-      this.log.log(["onWindowChanged", { window, comment }]);
+      this.log.log(['onWindowChanged', { window, comment }])
 
-      if (comment === "unminimized") {
-        this.currentWindow = window;
+      if (comment === 'unminimized') {
+        this.currentWindow = window
       }
 
-      this.engine.arrange();
+      this.engine.arrange(window.surface)
     }
   }
 
   public onWindowFocused(win: EngineWindow): void {
-    win.timestamp = new Date().getTime();
+    win.timestamp = new Date().getTime()
 
     // Minimize other windows if Monocle and config.monocleMinimizeRest
     if (this.engine.isLayoutMonocleAndMinimizeRest()) {
-      this.engine.minimizeOthers(win);
+      this.engine.minimizeOthers(win)
     }
   }
 
   public onWindowShadeChanged(win: EngineWindow): void {
-    this.log.log(`onWindowShadeChanged, window: ${win}`);
+    this.log.log(`onWindowShadeChanged, window: ${win}`)
 
     // NOTE: Float shaded windows and change their state back once unshaded
     // For some reason shaded windows break our tiling geometry,
     // once resized. To avoid that, we put them to floating state.
     if (win.shaded) {
-      win.state = WindowState.Floating;
+      win.state = WindowState.Floating
     } else {
-      win.state = win.statePreviouslyAskedToChangeTo;
+      win.state = win.statePreviouslyAskedToChangeTo
     }
 
-    this.engine.arrange();
+    this.engine.arrange(win.surface)
   }
 
   public manageWindow(win: EngineWindow): void {
-    this.engine.manage(win);
+    this.engine.manage(win)
+  }
+
+  public restoreWindows(windows: EngineWindow[]): void {
+    this.engine.restoreWindows(windows)
+  }
+
+  public moveWindowToSurface(
+    window: EngineWindow,
+    surface: DriverSurface
+  ): void {
+    this.driver.moveWindowToSurface(window, surface)
+    this.engine.arrange(surface)
   }
 
   public drop(): void {
-    this.driver.drop();
+    this.driver.drop()
   }
 
   private bindShortcuts(): void {
@@ -410,6 +544,11 @@ export class ControllerImpl implements Controller {
       new Action.MoveActiveWindowDown(this.engine, this.log),
       new Action.MoveActiveWindowLeft(this.engine, this.log),
       new Action.MoveActiveWindowRight(this.engine, this.log),
+
+      new Action.MoveActiveWindowToSurfaceUp(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceDown(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceLeft(this.engine, this.log),
+      new Action.MoveActiveWindowToSurfaceRight(this.engine, this.log),
 
       new Action.IncreaseActiveWindowWidth(this.engine, this.log),
       new Action.IncreaseActiveWindowHeight(this.engine, this.log),
@@ -438,10 +577,10 @@ export class ControllerImpl implements Controller {
       new Action.Rotate(this.engine, this.log),
       new Action.RotateReverse(this.engine, this.log),
       new Action.RotatePart(this.engine, this.log),
-    ];
+    ]
 
     for (const action of allPossibleActions) {
-      this.proxy.registerShortcut(action);
+      this.proxy.registerShortcut(action)
     }
   }
 }

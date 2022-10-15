@@ -8,13 +8,17 @@
 declare namespace Bismuth {
   export namespace Qml {
     export interface Main {
-      scriptRoot: object;
-      activityInfo: Plasma.TaskManager.ActivityInfo;
-      popupDialog: PopupDialog;
+      scriptRoot: object
+      activityInfo: Plasma.TaskManager.ActivityInfo
+      popupDialog0: PopupDialog
+      popupDialog1: PopupDialog
+      popupDialog2: PopupDialog
+      popupDialog3: PopupDialog
+      popupDialog4: PopupDialog
     }
 
     export interface PopupDialog {
-      show(text: string, icon?: string, hint?: string): void;
+      show(text: string, icon?: string, hint?: string, screen?: number): void
     }
   }
 }

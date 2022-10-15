@@ -72,31 +72,101 @@ Kirigami.FormLayout {
         id: windowSpawnPositionGroup
     }
 
+    BIC.ConfigCheckBox {
+        text: i18n("Allow movement across screen boundries")
+        settingName: "moveBetweenSurfaces"
+    }
+
     QQC2.RadioButton {
-        Kirigami.FormData.label: i18n("Spawn windows at:")
-        text: i18n("Master area")
+        Kirigami.FormData.label: i18n("New windows span:")
+        text: i18n("At the master area")
         QQC2.ButtonGroup.group: windowSpawnPositionGroup
-        checked: kcm.config.newWindowAsMaster
-        onClicked: kcm.config.newWindowAsMaster = checked
+        checked: kcm.config.newWindowSpawnLocation == "master"
+        onClicked: kcm.config.newWindowSpawnLocation = "master"
 
         KCM.SettingStateBinding {
             configObject: kcm.config
-            settingName: "newWindowAsMaster"
+            settingName: "newWindowSpawnLocation"
         }
 
     }
 
     QQC2.RadioButton {
-        text: i18n("The layout's end")
+        text: i18n("At the active window")
         QQC2.ButtonGroup.group: windowSpawnPositionGroup
-        checked: !kcm.config.newWindowAsMaster
-        onClicked: kcm.config.newWindowAsMaster = !checked
+        checked: kcm.config.newWindowSpawnLocation == "beforeFocused"
+        onClicked: kcm.config.newWindowSpawnLocation = "beforeFocused"
 
         KCM.SettingStateBinding {
             configObject: kcm.config
-            settingName: "newWindowAsMaster"
+            settingName: "newWindowSpawnLocation"
+        }
+    }
+
+    QQC2.RadioButton {
+        text: i18n("After the active window")
+        QQC2.ButtonGroup.group: windowSpawnPositionGroup
+        checked: kcm.config.newWindowSpawnLocation == "afterFocused"
+        onClicked: kcm.config.newWindowSpawnLocation = "afterFocused"
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "newWindowSpawnLocation"
+        }
+    }
+
+    QQC2.RadioButton {
+        text: i18n("At the layout's end")
+        QQC2.ButtonGroup.group: windowSpawnPositionGroup
+        checked: kcm.config.newWindowSpawnLocation == "end"
+        onClicked: kcm.config.newWindowSpawnLocation = "end" 
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "newWindowSpawnLocation" 
         }
 
+    }
+
+    QQC2.RadioButton {
+        text: i18n("Floating")
+        QQC2.ButtonGroup.group: windowSpawnPositionGroup
+        checked: kcm.config.newWindowSpawnLocation == "floating"
+        onClicked: kcm.config.newWindowSpawnLocation = "floating"
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "newWindowSpawnLocation"
+        }
+    }
+
+    QQC2.ButtonGroup {
+        id: mouseDragBehaviorGroup
+    }
+
+    QQC2.RadioButton {
+        Kirigami.FormData.label: i18n("Windows moved by mouse:")
+        text: i18n("Swap with target window")
+        QQC2.ButtonGroup.group: mouseDragBehaviorGroup
+        checked: !kcm.config.mouseDragInsert
+        onClicked: kcm.config.mouseDragInsert = !checked
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "mouseDragInsert"
+        }
+    }
+
+    QQC2.RadioButton {
+        text: i18n("Insert at target window")
+        QQC2.ButtonGroup.group: mouseDragBehaviorGroup
+        checked: kcm.config.mouseDragInsert
+        onClicked: kcm.config.mouseDragInsert = checked
+
+        KCM.SettingStateBinding {
+            configObject: kcm.config
+            settingName: "mouseDragInsert"
+        }
     }
 
     QQC2.Button {
