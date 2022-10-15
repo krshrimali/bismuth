@@ -3,9 +3,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { EngineWindow } from "./window";
+import { EngineWindow } from './window'
 
-import { DriverSurface } from "../driver/surface";
+import { DriverSurface } from '../driver/surface'
 
 /**
  * Window storage facility with convenient window filters built-in.
@@ -14,60 +14,65 @@ export interface WindowStore {
   /**
    * Returns all visible windows on the given surface.
    */
-  visibleWindowsOn(surf: DriverSurface): EngineWindow[];
+  visibleWindowsOn(surf: DriverSurface): EngineWindow[]
 
   /**
    * Return all visible "Tile" windows on the given surface.
    */
-  visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[];
+  visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[]
+
+  /**
+   * Return all visible "Tile" windows on the given activity and desktop.
+   */
+  visibleTiledWindows(activity: string, desktop: number): EngineWindow[]
 
   /**
    * Return all visible "tileable" windows on the given surface
    * @see Window#tileable
    */
-  visibleTileableWindowsOn(surf: DriverSurface): EngineWindow[];
+  visibleTileableWindowsOn(surf: DriverSurface): EngineWindow[]
 
   /**
    * Return all "tileable" windows on the given surface, including hidden
    */
-  tileableWindowsOn(surf: DriverSurface): EngineWindow[];
+  tileableWindowsOn(surf: DriverSurface): EngineWindow[]
 
   /**
    * Return all windows on this surface, including minimized windows
    */
-  allWindowsOn(surf: DriverSurface): EngineWindow[];
+  allWindowsOn(surf: DriverSurface): EngineWindow[]
 
   /**
    * Inserts the window at the beginning
    */
-  unshift(window: EngineWindow): void;
+  unshift(window: EngineWindow): void
 
   /**
    * Inserts the window at the end
    */
-  push(window: EngineWindow): void;
+  push(window: EngineWindow): void
 
   /**
    * Remove window from the store
    */
-  remove(window: EngineWindow): void;
+  remove(window: EngineWindow): void
 
   /**
    * Move srcWin to the destWin position (before/after)
    * @param after if true, srcWin is moved after the destWindow. If false - it is moved before.
    */
-  move(srcWin: EngineWindow, destWin: EngineWindow, after?: boolean): void;
+  move(srcWin: EngineWindow, destWin: EngineWindow, after?: boolean): void
 
   /**
    * Swap windows positions
    */
-  swap(alpha: EngineWindow, beta: EngineWindow): void;
+  swap(alpha: EngineWindow, beta: EngineWindow): void
 
   /**
    * Put the window into the master area.
    * @param window window to put into the master area
    */
-  putWindowToMaster(window: EngineWindow): void;
+  putWindowToMaster(window: EngineWindow): void
 }
 
 export class WindowStoreImpl implements WindowStore {
@@ -81,84 +86,86 @@ export class WindowStoreImpl implements WindowStore {
     destWin: EngineWindow,
     after?: boolean
   ): void {
-    const srcIdx = this.list.indexOf(srcWin);
-    const destIdx = this.list.indexOf(destWin);
+    const srcIdx = this.list.indexOf(srcWin)
+    const destIdx = this.list.indexOf(destWin)
     if (srcIdx === -1 || destIdx === -1) {
-      return;
+      return
     }
 
     // Delete the source window
-    this.list.splice(srcIdx, 1);
+    this.list.splice(srcIdx, 1)
     // Place the source window in before destination window or after it
-    this.list.splice(after ? destIdx + 1 : destIdx, 0, srcWin);
+    this.list.splice(after ? destIdx + 1 : destIdx, 0, srcWin)
   }
 
   public putWindowToMaster(window: EngineWindow): void {
-    const idx = this.list.indexOf(window);
+    const idx = this.list.indexOf(window)
     if (idx === -1) {
-      return;
+      return
     }
-    this.list.splice(idx, 1);
-    this.list.splice(0, 0, window);
+    this.list.splice(idx, 1)
+    this.list.splice(0, 0, window)
   }
 
   public swap(alpha: EngineWindow, beta: EngineWindow): void {
-    const alphaIndex = this.list.indexOf(alpha);
-    const betaIndex = this.list.indexOf(beta);
+    const alphaIndex = this.list.indexOf(alpha)
+    const betaIndex = this.list.indexOf(beta)
     if (alphaIndex < 0 || betaIndex < 0) {
-      return;
+      return
     }
 
-    this.list[alphaIndex] = beta;
-    this.list[betaIndex] = alpha;
+    this.list[alphaIndex] = beta
+    this.list[betaIndex] = alpha
   }
 
   public get length(): number {
-    return this.list.length;
+    return this.list.length
   }
 
   public at(idx: number): EngineWindow {
-    return this.list[idx];
+    return this.list[idx]
   }
 
   public indexOf(window: EngineWindow): number {
-    return this.list.indexOf(window);
+    return this.list.indexOf(window)
   }
 
   public push(window: EngineWindow): void {
-    this.list.push(window);
+    this.list.push(window)
   }
 
   public remove(window: EngineWindow): void {
-    const idx = this.list.indexOf(window);
+    const idx = this.list.indexOf(window)
     if (idx >= 0) {
-      this.list.splice(idx, 1);
+      this.list.splice(idx, 1)
     }
   }
 
   public unshift(window: EngineWindow): void {
-    this.list.unshift(window);
+    this.list.unshift(window)
   }
 
   public visibleWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.visibleOn(surf));
+    return this.list.filter((win) => win.visibleOn(surf))
+  }
+
+  public visibleTiledWindows(act: string, desk: number): EngineWindow[] {
+    return this.list.filter((win) => win.tiled && win.visible(act, desk))
   }
 
   public visibleTiledWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.tiled && win.visibleOn(surf));
+    return this.list.filter((win) => win.tiled && win.visibleOn(surf))
   }
 
   public visibleTileableWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.tileable && win.visibleOn(surf));
+    return this.list.filter((win) => win.tileable && win.visibleOn(surf))
   }
 
   public tileableWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter(
-      (win) => win.tileable && win.surface.id === surf.id
-    );
+    return this.list.filter((win) => win.tileable && win.surface.id === surf.id)
   }
 
   public allWindowsOn(surf: DriverSurface): EngineWindow[] {
-    return this.list.filter((win) => win.surface.id === surf.id);
+    return this.list.filter((win) => win.surface.id === surf.id)
   }
 }
