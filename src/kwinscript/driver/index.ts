@@ -5,7 +5,7 @@
 
 import { DriverSurface } from './surface'
 import { DriverSurfaceImpl } from './surface'
-import { DriverWindowImpl } from './window'
+import { DriverWindow, DriverWindowImpl } from './window'
 
 import { Controller } from '../controller'
 
@@ -53,7 +53,16 @@ export interface Driver {
    * @param icon an optional name of the icon to display in the pop-up.
    * @param hint an optional string displayed beside the main text.
    */
-  showNotification(text: string, icon?: string, hint?: string): void
+  showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void
+
+  onCurrentDesktopChanged(): void
+
+  onNumberDesktopsChanged(oldNumDesktops: number): void
 
   /**
    * Bind script to the various KWin events
@@ -80,10 +89,12 @@ export interface Driver {
 
 export class DriverImpl implements Driver {
   public get currentSurface(): DriverSurface {
+    const screen = this.kwinApi.workspace.activeScreen
+    const desktop = this.kwinApi.workspace.currentDesktop
     return new DriverSurfaceImpl(
-      this.kwinApi.workspace.activeScreen,
+      screen,
       this.kwinApi.workspace.currentActivity,
-      this.kwinApi.workspace.currentDesktop,
+      desktop,
       this.qml.activityInfo,
       this.config,
       this.kwinApi
@@ -168,6 +179,8 @@ export class DriverImpl implements Driver {
   ) {
     this.registeredConnections = []
 
+    const customScreenOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
     // TODO: find a better way to to this
     if (this.config.preventMinimize && this.config.monocleMinimizeRest) {
       log.log('preventMinimize is disabled because of monocleMinimizeRest')
@@ -187,6 +200,9 @@ export class DriverImpl implements Driver {
     this.entered = false
     this.qml = qmlObjects
     this.kwinApi = kwinApi
+    if (this.kwinApi.workspace.desktops < 2) {
+      this.kwinApi.workspace.desktops++
+    }
   }
 
   public bindEvents(): void {
@@ -240,11 +256,15 @@ export class DriverImpl implements Driver {
       this.controller.onWindowChanged(this.windowMap.get(client), 'unminimized')
 
     this.connect(this.kwinApi.workspace.currentActivityChanged, () =>
-      this.controller.onCurrentSurfaceChanged()
+      this.controller.onCurrentActivityChanged()
     )
 
     this.connect(this.kwinApi.workspace.currentDesktopChanged, () =>
-      this.controller.onCurrentSurfaceChanged()
+      this.controller.onCurrentDesktopChanged()
+    )
+
+    this.connect(this.kwinApi.workspace.numberDesktopsChanged, (num: number) =>
+      this.onNumberDesktopsChanged(num)
     )
 
     this.connect(this.kwinApi.workspace.clientAdded, onClientAdded)
@@ -280,8 +300,50 @@ export class DriverImpl implements Driver {
     this.controller.manageWindow(window)
   }
 
-  public showNotification(text: string, icon?: string, hint?: string): void {
-    this.qml.popupDialog.show(text, icon, hint)
+  public showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void {
+    // this.qml.popupDialog.show(text, icon, hint, screen)
+    switch (screen) {
+      case 0:
+        this.qml.popupDialog0.show(text, icon, hint, screen)
+        break
+      case 1:
+        this.qml.popupDialog1.show(text, icon, hint, screen)
+        break
+      case 2:
+        this.qml.popupDialog2.show(text, icon, hint, screen)
+        break
+      case 3:
+        this.qml.popupDialog3.show(text, icon, hint, screen)
+        break
+      case 4:
+        this.qml.popupDialog4.show(text, icon, hint, screen)
+        break
+    }
+  }
+
+  public onCurrentDesktopChanged(): void {
+    // const desktop = this.currentDesktop;
+    // for (const surf of this.controller.screens()) {
+    //   this.swapGroupToSurface(
+    //     this.groupMapSurface[desktop][surf.screen],
+    //     surf.screen
+    //   );
+    // }
+  }
+
+  public onNumberDesktopsChanged(oldNumDesktops: number): void {
+    this.log.log(
+      `onNumberDesktopsChanged from ${oldNumDesktops} to ${this.kwinApi.workspace.desktops}`
+    )
+    if (this.kwinApi.workspace.desktops < 2) {
+      this.log.log('Too few desktops! Adding one desktop.')
+      this.kwinApi.workspace.desktops++
+    }
   }
 
   public drop(): void {
@@ -404,13 +466,28 @@ export class DriverImpl implements Driver {
       )
     )
 
-    this.connect(client.desktopChanged, () =>
-      this.controller.onWindowChanged(window, `desktop=${client.desktop}`)
-    )
+    this.connect(client.desktopChanged, () => {
+      // ignore hijacked desktop ids
+      if (client.desktop == -1 || client.desktop == 3) {
+        this.log.log(`ignoring desktop ${client.desktop}`)
+        return
+      }
+      this.log.log(`kwin tried to move window to desktop ${client.desktop}`)
+      // client.desktop = this.currentDesktop
+      // this.controller.onWindowChanged(window, `desktop=${client.desktop}`)
+    })
 
     this.connect(client.shadeChanged, () => {
       this.controller.onWindowShadeChanged(window)
     })
+
+    this.connect(
+      client.clientMaximizedStateChanged,
+      (win: KWin.Client, h: boolean, v: boolean) => {
+        this.log.log(`clientMaximizedStateChanged ${h} ${v}`)
+        this.controller.onWindowMaximizeChanged(window, h || v)
+      }
+    )
   }
 }
 

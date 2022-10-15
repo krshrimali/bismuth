@@ -55,12 +55,19 @@ export interface Controller {
    * @param icon an optional name of the icon to display in the pop-up.
    * @param hint an optional string displayed beside the main text.
    */
-  showNotification(text: string, icon?: string, hint?: string): void
+  showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void
 
   /**
    * React to screen focus change
    */
   onCurrentSurfaceChanged(): void
+  onCurrentActivityChanged(): void
+  onCurrentDesktopChanged(): void
 
   /**
    * React to screen update. For example, when the new screen has connected.
@@ -92,6 +99,9 @@ export interface Controller {
    * @param window the window whose screen has changed
    */
   onWindowScreenChanged(window: EngineWindow): void
+
+  onWindowActivityChanged(window: EngineWindow): void
+  onWindowDesktopChanged(window: EngineWindow): void
 
   /**
    * React to window resize operation end. The window
@@ -200,7 +210,7 @@ export class ControllerImpl implements Controller {
 
     this.driver.manageWindows()
 
-    this.engine.arrange()
+    // this.engine.arrange()
   }
 
   public screens(activity?: string, desktop?: number): DriverSurface[] {
@@ -243,8 +253,24 @@ export class ControllerImpl implements Controller {
     this.driver.currentSurface = value
   }
 
-  public showNotification(text: string, icon?: string, hint?: string): void {
-    this.driver.showNotification(text, icon, hint)
+  public showNotification(
+    text: string,
+    icon?: string,
+    hint?: string,
+    screen?: number
+  ): void {
+    if (screen === -1) {
+      // all screens
+      for (const surf of this.screens()) {
+        this.driver.showNotification(text, icon, hint, surf.screen)
+      }
+      return
+    } else if (screen === undefined) {
+      // current screen
+      screen = this.currentSurface.screen
+    }
+    // specified screen
+    this.driver.showNotification(text, icon, hint, screen)
   }
 
   public onSurfaceUpdate(): void {
@@ -253,27 +279,54 @@ export class ControllerImpl implements Controller {
 
   public onCurrentSurfaceChanged(): void {
     this.log.log(['onCurrentSurfaceChanged', { srf: this.currentSurface }])
-    this.engine.arrange()
+    this.engine.arrange(this.currentSurface)
   }
 
   public onWindowAdded(window: EngineWindow): void {
     this.log.log(['onWindowAdded', { window }])
     this.engine.manage(window)
 
-    /* move window to next surface if the current surface is "full" */
-    if (window.tileable) {
-      const srf = this.currentSurface
-      const tiles = this.engine.windows.visibleTiledWindowsOn(srf)
-      const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity
-      if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
-        const nextSurface = this.currentSurface.next()
-        if (nextSurface) {
-          // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
-          window.surface = nextSurface
-          this.currentSurface = nextSurface
-        }
-      }
-    }
+    // /* move window to next surface if the current surface is "full" */
+    // if (window.tileable) {
+    //   const srf = this.currentSurface
+    //   const tiles = this.engine.windows.visibleTiledWindowsOn(srf)
+    //   const layoutCapacity = this.engine.layouts.getCurrentLayout(srf).capacity
+    //   if (layoutCapacity !== undefined && tiles.length > layoutCapacity) {
+    //     const nextSurface = this.currentSurface.next()
+    //     if (nextSurface) {
+    //       // (window.window as KWinWindow).client.desktop = (nextSurface as KWinSurface).desktop;
+    //       window.surface = nextSurface
+    //       this.currentSurface = nextSurface
+    //     }
+    //   }
+    // }
+  }
+
+  public onCurrentActivityChanged(): void {
+    this.log.log(['onCurrentActivityChanged', { srf: this.currentSurface }])
+    this.engine.arrange()
+  }
+
+  public onCurrentDesktopChanged(): void {
+    this.log.log('onCurrentDesktopChanged')
+    // TODO: @krshrimali
+    // if (this.currentDesktop == this.kwinApi.workspace.desktops) {
+    //   this.log.log(`tried to access hidden desktop ${this.currentDesktop}`)
+    //   this.showNotification(`Desktop ${this.currentDesktop} forbidden`)
+    //   this.kwinApi.workspace.currentDesktop--
+    //   return
+    // }
+    // for (const surf of this.screens()) {
+    //   this.showNotification('Group', undefined, `${surf.group}`, surf.screen)
+    // }
+    this.showNotification(
+      `Desktop ${this.currentDesktop} is forbidden`,
+      undefined,
+      undefined,
+      -1
+    )
+    this.driver.onCurrentDesktopChanged()
+    this.engine.arrange()
   }
 
   public onWindowRemoved(window: EngineWindow): void {
@@ -290,8 +343,6 @@ export class ControllerImpl implements Controller {
         this.engine.focusOrder(1, true)
       }
     }
-
-    this.engine.arrange()
   }
 
   public onWindowMoveStart(window: EngineWindow): void {
@@ -318,7 +369,7 @@ export class ControllerImpl implements Controller {
         } else {
           this.engine.windows.swap(window, targets[0])
         }
-        this.engine.arrange()
+        this.engine.arrange(window.surface)
         return
       }
     }
@@ -334,7 +385,7 @@ export class ControllerImpl implements Controller {
         if (distance > 30) {
           window.floatGeometry = window.actualGeometry
           window.state = WindowState.Floating
-          this.engine.arrange()
+          this.engine.arrange(window.surface)
           this.engine.showNotification('Window Untiled')
           return
         }
@@ -354,7 +405,7 @@ export class ControllerImpl implements Controller {
 
     if (win.state === WindowState.Tiled) {
       this.engine.adjustLayout(win)
-      this.engine.arrange()
+      this.engine.arrange(win.surface)
     }
   }
 
@@ -365,7 +416,7 @@ export class ControllerImpl implements Controller {
 
     if (win.tiled) {
       this.engine.adjustLayout(win)
-      this.engine.arrange()
+      this.engine.arrange(win.surface)
     }
   }
 
@@ -373,7 +424,7 @@ export class ControllerImpl implements Controller {
     _window: EngineWindow,
     _maximized: boolean
   ): void {
-    this.engine.arrange()
+    this.engine.arrange(_window.surface)
   }
 
   public onWindowGeometryChanged(window: EngineWindow): void {
@@ -382,7 +433,28 @@ export class ControllerImpl implements Controller {
 
   public onWindowScreenChanged(_window: EngineWindow): void {
     //TODO only arrange the surface the window came from and went to
-    this.engine.arrange()
+    if (!_window.surface) {
+      return
+    }
+    this.moveWindowToSurface(_window, _window.surface)
+  }
+
+  public onWindowActivityChanged(window: EngineWindow): void {
+    this.log.log('onWindowActivityChanged')
+    if (!window.screen) {
+      return
+    }
+    this.engine.arrange(this.screens()[window.screen])
+    // this.moveWindowToSurface(window, window.surface);
+  }
+
+  public onWindowDesktopChanged(window: EngineWindow): void {
+    this.log.log('onWindowDesktopChanged')
+    if (!window.screen) {
+      return
+    }
+    this.engine.arrange(this.screens()[window.screen])
+    // this.moveWindowToSurface(window, window.surface);
   }
 
   // NOTE: accepts `null` to simplify caller. This event is a catch-all hack
@@ -395,7 +467,7 @@ export class ControllerImpl implements Controller {
         this.currentWindow = window
       }
 
-      this.engine.arrange()
+      this.engine.arrange(window.surface)
     }
   }
 
@@ -420,7 +492,7 @@ export class ControllerImpl implements Controller {
       win.state = win.statePreviouslyAskedToChangeTo
     }
 
-    this.engine.arrange()
+    this.engine.arrange(win.surface)
   }
 
   public manageWindow(win: EngineWindow): void {
@@ -432,7 +504,7 @@ export class ControllerImpl implements Controller {
     surface: DriverSurface
   ): void {
     this.driver.moveWindowToSurface(window, surface)
-    this.engine.arrange()
+    this.engine.arrange(surface)
   }
 
   public drop(): void {

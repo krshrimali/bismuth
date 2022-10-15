@@ -10,6 +10,13 @@ import { clip, matchWords } from '../util/func'
 import { Config } from '../config'
 import { Log } from '../util/log'
 import { TSProxy } from '../extern/proxy'
+import { EngineWindow } from '../engine/window'
+
+/**
+ * Hijack kwin's desktop module to gain the ability to hide and show windows
+ */
+const SHOWN_DESKTOP = -1
+const HIDDEN_DESKTOP = 3
 
 /**
  * KWin window representation.
@@ -48,7 +55,7 @@ export interface DriverWindow {
   /**
    * The screen number the window is currently at
    */
-  readonly screen: number
+  readonly screen: number | null
 
   /**
    * Whether the window is focused right now
@@ -63,7 +70,9 @@ export interface DriverWindow {
   /**
    * Window's current surface
    */
-  surface: DriverSurface
+  surface: DriverSurface | null
+
+  hidden: boolean
 
   /**
    * Whether the window is minimized
@@ -99,7 +108,7 @@ export interface DriverWindow {
 
 export class DriverWindowImpl implements DriverWindow {
   public readonly id: string
-  private _screen: number
+  private _screen: number | null
 
   public get fullScreen(): boolean {
     return this.client.fullScreen
@@ -149,7 +158,9 @@ export class DriverWindowImpl implements DriverWindow {
     )
   }
 
-  public get screen(): number {
+  public get screen(): number | null {
+    if (this._screen === null || this._screen < 0 || this._screen > 4) {
+    }
     return this._screen
   }
 
@@ -167,7 +178,7 @@ export class DriverWindowImpl implements DriverWindow {
 
   public maximized: boolean
 
-  public get surface(): DriverSurface {
+  public get surface(): DriverSurface | null {
     let activity
     if (this.client.activities.length === 0) {
       activity = this.kwinApi.workspace.currentActivity
@@ -185,6 +196,11 @@ export class DriverWindowImpl implements DriverWindow {
         ? this.client.desktop
         : this.kwinApi.workspace.currentDesktop
 
+    //TODO return null if our group isn't currently shown on any surface
+    if (this._screen === null) {
+      return null
+    }
+
     return new DriverSurfaceImpl(
       this._screen,
       activity,
@@ -195,7 +211,14 @@ export class DriverWindowImpl implements DriverWindow {
     )
   }
 
-  public set surface(surf: DriverSurface) {
+  public set surface(surf: DriverSurface | null) {
+    if (!surf) {
+      this.hidden = true
+      this._screen = null
+      return
+    }
+
+    this.hidden = false
     const surfImpl = surf as DriverSurfaceImpl
 
     // TODO: setting activity?
@@ -205,10 +228,56 @@ export class DriverWindowImpl implements DriverWindow {
     }
 
     this._screen = surfImpl.screen
+
+    // if (surf.screen < 5) {
+    //   this.hidden = false
+    // } else {
+    //   this.hidden = true
+    // }
   }
 
   private noBorderManaged: boolean
   private noBorderOriginal: boolean
+
+  public get hidden(): boolean {
+    // return this.kwinApi.workspace.isWindowHidden(this.client)
+    return this.client.desktop == this.kwinApi.workspace.desktops
+    // return this.client.isHidden();
+    // return false;
+  }
+
+  public set hidden(isHidden: boolean) {
+    // if (this.hidden == isHidden) {
+    //   return
+    // }
+
+    // if (this.client.minimized) {
+    //   return
+    // }
+
+    // this.log.log(`setHidden ${isHidden}`);
+    // this.client.setHidden(isHidden);
+    // this.log.log(`omg`);
+    // const wtf = this.proxy.workspace().setWindowHidden(this.client, isHidden);
+    // const wtf = this.proxy.workspace().setWindowHidden();
+    // const newDesktop = isHidden
+    //   ? HIDDEN_DESKTOP
+    //   : this.kwinApi.workspace.currentDesktop
+
+    // if (newDesktop > 3 || newDesktop == 0 || newDesktop < -1) {
+    //   // this.log.log(`new desktop ${newDesktop}`)
+    // }
+    if (isHidden) {
+      this.client.desktop = this.kwinApi.workspace.desktops
+      // this._screen = null;
+    } else {
+      this.client.desktop = this.kwinApi.workspace.currentDesktop
+    }
+    // this._screen
+    // this.proxy.workspace().slotWindowToDesktopDown();
+    // this.log.log(`wtf`);
+    // this.log.log(`wtf ${wtf}`);
+  }
 
   /**
    * Create a window from the KWin client object
@@ -229,6 +298,12 @@ export class DriverWindowImpl implements DriverWindow {
     this.noBorderManaged = false
     this.noBorderOriginal = client.noBorder
     this._screen = client.screen
+
+    if (!this.shouldIgnore) {
+      this.hidden = false
+    } else {
+      // this.hidden = true
+    }
   }
 
   public static generateID(client: KWin.Client): string {
@@ -250,7 +325,14 @@ export class DriverWindowImpl implements DriverWindow {
     //   `
     // );
 
-    if (this.client.move || this.client.resize) {
+    if (!this.surface) {
+      // this.log.log(`tried to commit window with no surface ${this}`)
+      this.hidden = true
+      return
+    }
+    this.hidden = false
+
+    if (this.client.move || this.client.resize || this.hidden) {
       return
     }
 
@@ -286,8 +368,8 @@ export class DriverWindowImpl implements DriverWindow {
         const area = Rect.fromQRect(
           this.kwinApi.workspace.clientArea(
             0, // This is placement area
-            this.client.screen,
-            this.kwinApi.workspace.currentDesktop
+            this.surface.screen,
+            this.client.desktop
           )
         )
         if (!area.includes(geometry)) {
@@ -298,7 +380,12 @@ export class DriverWindowImpl implements DriverWindow {
           geometry = this.adjustGeometry(geometry)
         }
       }
-      this.client.frameGeometry = geometry.toQRect()
+      // this.client.frameGeometry = geometry.toQRect()
+      if (this.client.frameGeometry != geometry.toQRect()) {
+        this.client.frameGeometry = geometry.toQRect()
+      } else {
+        // this.log.log("no update");
+      }
     }
   }
 
@@ -312,8 +399,6 @@ export class DriverWindowImpl implements DriverWindow {
   public visible(activity: string, desktop: number): boolean {
     return (
       !this.client.minimized &&
-      (this.client.desktop === desktop ||
-        this.client.desktop === -1) /* on all desktop */ &&
       (this.client.activities.length === 0 /* on all activities */ ||
         this.client.activities.indexOf(activity) !== -1)
     )

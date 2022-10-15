@@ -101,7 +101,7 @@ export interface EngineWindow {
   /**
    * Screen number, on which the window is present
    */
-  readonly screen: number
+  readonly screen: number | null
 
   /**
    * Whether the window is minimized
@@ -121,7 +121,7 @@ export interface EngineWindow {
   /**
    * Surface, the window is currently on
    */
-  surface: DriverSurface
+  surface: DriverSurface | null
 
   /**
    * General state of the window: floating, maximized, tiled etc.
@@ -197,7 +197,7 @@ export class EngineWindowImpl implements EngineWindow {
     return this.window.shouldIgnore
   }
 
-  public get screen(): number {
+  public get screen(): number | null {
     return this.window.screen
   }
 
@@ -283,27 +283,32 @@ export class EngineWindowImpl implements EngineWindow {
     return this.internalStatePreviouslyAskedToChangeTo
   }
 
-  public get surface(): DriverSurface {
+  public get surface(): DriverSurface | null {
     return this.window.surface
   }
 
-  public set surface(srf: DriverSurface) {
+  public set surface(srf: DriverSurface | null) {
     this.window.surface = srf
   }
 
   public get weight(): number {
-    const srfID = this.window.surface.id
-    const winWeight: number | undefined = this.weightMap[srfID]
+    const srfID = this.window.surface?.id
+    let winWeight: number | undefined
+    if (srfID) winWeight = this.weightMap[srfID]
+    else winWeight = undefined
+
     if (winWeight === undefined) {
-      this.weightMap[srfID] = 1.0
+      if (srfID) this.weightMap[srfID] = 1.0
       return 1.0
     }
     return winWeight
   }
 
   public set weight(value: number) {
-    const srfID = this.window.surface.id
-    this.weightMap[srfID] = value
+    if (this.window.surface) {
+      const srfID = this.window.surface?.id
+      this.weightMap[srfID] = value
+    }
   }
 
   public get isDialog(): boolean {
@@ -334,6 +339,9 @@ export class EngineWindowImpl implements EngineWindow {
   }
 
   public commit(): void {
+    if (!this.window.surface) {
+      return
+    }
     const state = this.state
     // this.log.log(["Window#commit", { state: WindowState[state] }]);
     switch (state) {

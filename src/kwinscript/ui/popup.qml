@@ -13,11 +13,14 @@ PlasmaCore.Dialog {
 
     property rect screenGeometry
 
-    function show(text, icon, hint) {
+    function show(text, icon, hint, screen=-1) {
         // Abort any previous timers
         hideTimer.stop();
         // Update current screen information
-        this.screenGeometry = workspace.clientArea(KWin.FullScreenArea, workspace.activeScreen, workspace.currentDesktop);
+        if (screen == -1) {
+          screen = workspace.activeScreen;
+        }
+        this.screenGeometry = workspace.clientArea(KWin.FullScreenArea, screen, workspace.currentDesktop);
         // Set the icon and text
         messageText.text = text;
         messageIcon.source = icon || "bismuth"; // Fallback to the default icon when undefined

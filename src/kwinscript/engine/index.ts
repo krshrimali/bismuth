@@ -18,6 +18,7 @@ import { overlap, wrapIndex } from '../util/func'
 import { Config } from '../config'
 import { Log } from '../util/log'
 import { WindowsLayout } from './layout'
+import { DriverWindowImpl } from '../driver/window'
 
 export type Direction = 'up' | 'down' | 'left' | 'right'
 export type CompassDirection = 'east' | 'west' | 'south' | 'north'
@@ -40,7 +41,7 @@ export interface Engine {
   /**
    * Arrange all the windows on the visible surfaces according to the tiling rules
    */
-  arrange(): void
+  arrange(screen?: DriverSurface | null): void
 
   /**
    * Register the given window to WM.
@@ -156,6 +157,8 @@ export interface Engine {
    */
   isLayoutMonocleAndMinimizeRest(): boolean
 
+  readonly currentSurface: DriverSurface
+
   /**
    * Show a popup notification in the center of the screen.
    * @param text the main text of the notification.
@@ -184,7 +187,12 @@ export class EngineImpl implements Engine {
     this.windows = new WindowStoreImpl()
   }
 
+  public get currentSurface(): DriverSurface {
+    return this.controller.currentSurface
+  }
+
   public adjustLayout(basis: EngineWindow): void {
+    if (!basis.surface) return
     const srf = basis.surface
     const layout = this.layouts.getCurrentLayout(srf)
     if (layout.adjust) {
@@ -204,6 +212,7 @@ export class EngineImpl implements Engine {
     dir: CompassDirection,
     step: Step
   ): void {
+    if (!window.surface) return
     const srf = window.surface
 
     // TODO: configurable step size?
@@ -238,6 +247,7 @@ export class EngineImpl implements Engine {
     dir: CompassDirection,
     step: Step
   ): void {
+    if (!basis.surface) return
     const srf = basis.surface
 
     if (dir === 'east') {
@@ -310,12 +320,19 @@ export class EngineImpl implements Engine {
     }
   }
 
-  public arrange(): void {
+  public arrange(screen?: DriverSurface | null): void {
+    if (screen == null) return
     /* Try to avoid calling this; use arrangeScreen and commitArrangement on
     specific surfaces instead */
     this.log.log('someone called global arrange')
 
     if (!this.controller.currentActivity || !this.controller.currentDesktop) {
+      return
+    }
+
+    if (screen) {
+      this.arrangeScreen(screen)
+      this.commitArrangement(screen)
       return
     }
 
@@ -349,6 +366,10 @@ export class EngineImpl implements Engine {
     })
 
     const tileableWindows = this.windows.visibleTileableWindowsOn(screenSurface)
+
+    tileableWindows.forEach((win: EngineWindow) => {
+      //
+    })
 
     // Maximize sole tile if enabled or apply the current layout as expected
     if (this.config.maximizeSoleTile && tileableWindows.length === 1) {
@@ -428,11 +449,20 @@ export class EngineImpl implements Engine {
         /* newWindowSpawnLocation == "end" or "floating" */
         this.windows.push(window)
       }
+      if (!window.surface) {
+        return
+      }
+      this.arrangeScreen(window.surface)
+      this.commitArrangement(window.surface)
     }
   }
 
   public unmanage(window: EngineWindow): void {
+    const surface = window.window.surface
     this.windows.remove(window)
+    if (surface) {
+      this.arrange(surface)
+    }
   }
 
   /**
@@ -501,6 +531,9 @@ export class EngineImpl implements Engine {
   }
 
   public swapOrder(window: EngineWindow, step: Step): void {
+    if (!window.surface) {
+      return
+    }
     const srf = window.surface
     const visibles = this.windows.visibleWindowsOn(srf)
     if (visibles.length < 2) {
@@ -533,7 +566,7 @@ export class EngineImpl implements Engine {
     const neighbor = this.getNeighborByDirection(window.geometry, dir)
     this.log.log(`found swap neighbor ${neighbor}`)
 
-    if (neighbor && neighbor.surface.id == window.surface.id) {
+    if (neighbor?.surface && neighbor.surface.id == window.surface?.id) {
       this.log.log(`swapping with neighbor on same surface ${window.surface}`)
 
       const iBefore = this.windows
@@ -553,7 +586,7 @@ export class EngineImpl implements Engine {
 
     const screenCandidates = this.controller
       .screens()
-      .filter((surface) => surface.id != window.surface.id)
+      .filter((surface) => surface.id != window.surface?.id)
 
     const closestSurface = this.findClosestSurface(
       window,
@@ -590,6 +623,9 @@ export class EngineImpl implements Engine {
    * @param dir which direction
    */
   public moveFloat(window: EngineWindow, dir: Direction): void {
+    if (!window.surface) {
+      return
+    }
     const srf = window.surface
 
     // TODO: configurable step size?
@@ -719,7 +755,7 @@ export class EngineImpl implements Engine {
 
     const screenCandidates = this.controller
       .screens()
-      .filter((surf) => surf.id != win.surface.id)
+      .filter((surf) => surf.id != win.surface?.id)
 
     const closestScreen = this.findClosestSurface(win, dir, screenCandidates)
 
@@ -736,6 +772,9 @@ export class EngineImpl implements Engine {
 
   public setMaster(window: EngineWindow): void {
     this.windows.putWindowToMaster(window)
+    if (window.window.surface) {
+      this.arrange(window.window.surface)
+    }
   }
 
   public cycleLayout(step: Step): void {
@@ -754,6 +793,49 @@ export class EngineImpl implements Engine {
         this.minimizeOthers(this.controller.currentWindow)
       }
     }
+  }
+
+  public moveWindowToSurface(
+    window: EngineWindow,
+    surface: DriverSurface
+  ): void {
+    // this.driver.moveWindowToSurface(window, surface);
+    // this.log
+    //   .log
+    //   /* `moving from group ${window.window.group} to screen ${surface.screen}` */
+    //   ()
+    // window.surface = surface;
+    this.arrangeScreen(surface)
+    this.commitArrangement(surface)
+  }
+  public swapSurfaceToScreen(surface: DriverSurface, screen: number): void {
+    // this.controller.screens()[screen].
+    // surface.screen = screen;
+
+    const surfaceA = surface
+    const surfaceB = this.controller.screens()[screen]
+
+    const windowsA = this.windows.visibleTiledWindowsOn(surfaceA)
+    const windowsB = this.windows.visibleTiledWindowsOn(surfaceB)
+
+    for (const win of windowsA) {
+      win.surface = surfaceB
+    }
+
+    for (const win of windowsB) {
+      win.surface = surfaceA
+    }
+
+    this.arrange(surfaceA)
+    this.arrange(surfaceB)
+  }
+
+  public swapSurfaceToActiveScreen(surfaceNum: number): void {
+    this.log.log(
+      `swapping surface ${surfaceNum} to screen ${this.controller.currentSurface.screen}`
+    )
+
+    this.swapSurfaceToScreen(this.controller.currentSurface, surfaceNum)
   }
 
   public toggleLayout(layoutClassID: string): void {
@@ -775,6 +857,7 @@ export class EngineImpl implements Engine {
   }
 
   public minimizeOthers(window: EngineWindow): void {
+    if (!window.surface) return
     for (const tile of this.windows.visibleTiledWindowsOn(window.surface)) {
       if (
         tile.screen == window.screen &&
