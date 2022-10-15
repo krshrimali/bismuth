@@ -108,13 +108,12 @@ export class DriverImpl implements Driver {
     const desktop = this.proxy.workspace().currentDesktop;
     const screen = this.proxy.workspace().activeScreen;
     return new DriverSurfaceImpl(
-      screen,
-      this.proxy.workspace().currentActivity,
-      desktop,
+      this.kwinApi.workspace.activeScreen,
+      this.kwinApi.workspace.currentActivity,
+      this.kwinApi.workspace.currentDesktop,
       this.qml.activityInfo,
       this.config,
-      this.proxy,
-      this.log
+      this.kwinApi
     );
   }
 
@@ -125,8 +124,8 @@ export class DriverImpl implements Driver {
     // TODO: focusing window on other screen?
     // TODO: find a way to change activity
 
-    if (this.proxy.workspace().currentDesktop !== kwinSurface.desktop) {
-      this.proxy.workspace().currentDesktop = kwinSurface.desktop;
+    if (this.kwinApi.workspace.currentDesktop !== kwinSurface.desktop) {
+      this.kwinApi.workspace.currentDesktop = kwinSurface.desktop;
     }
   }
 
@@ -164,6 +163,7 @@ export class DriverImpl implements Driver {
 
   public screens(activity: string, desktop: number): DriverSurface[] {
     const screensArr = [];
+<<<<<<< HEAD
     // for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
     for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
       // this.log.log(`for ${screen} making ${this.groupMap[screen]}`);
@@ -176,6 +176,17 @@ export class DriverImpl implements Driver {
           this.config,
           this.proxy,
           this.log
+=======
+    for (let screen = 0; screen < this.kwinApi.workspace.numScreens; screen++) {
+      screensArr.push(
+        new DriverSurfaceImpl(
+          screen,
+          this.kwinApi.workspace.currentActivity,
+          this.kwinApi.workspace.currentDesktop,
+          this.qml.activityInfo,
+          this.config,
+          this.kwinApi
+>>>>>>> origin/master
         )
       );
     }
@@ -220,6 +231,7 @@ export class DriverImpl implements Driver {
     this.controller = controller;
     this.windowMap = new WrapperMap(
       (client: KWin.Client) => DriverWindowImpl.generateID(client),
+<<<<<<< HEAD
       (client: KWin.Client) => {
         // const group = this.groupMap[client.windowId];
         // let group = this.groupMapSurface[client.screen];
@@ -237,6 +249,11 @@ export class DriverImpl implements Driver {
             this.log,
             this.proxy
           ),
+=======
+      (client: KWin.Client) =>
+        new EngineWindowImpl(
+          new DriverWindowImpl(client, this.qml, this.config, this.kwinApi),
+>>>>>>> origin/master
           this.config,
           this.log,
           this.proxy
@@ -647,6 +664,7 @@ export class DriverImpl implements Driver {
     });
 
     this.connect(client.screenChanged, () => {
+<<<<<<< HEAD
       const oldSurface = window.window.surface;
 
       for (const surf of this.controller.screens()) {
@@ -657,6 +675,9 @@ export class DriverImpl implements Driver {
       }
 
       this.controller.onWindowScreenChanged(window, oldSurface);
+=======
+      this.controller.onWindowScreenChanged(window);
+>>>>>>> origin/master
     });
 
     this.connect(client.activitiesChanged, () =>

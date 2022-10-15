@@ -3,10 +3,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { Config } from "../config";
-import { TSProxy } from "../extern/proxy";
-import { Rect } from "../util/rect";
-import { Log } from "../util/log";
+import { Config } from '../config'
+import { TSProxy } from '../extern/proxy'
+import { Rect } from '../util/rect'
+import { Log } from '../util/log'
 
 /**
  * Surface provided by KWin. Surface is essentially a screen space, but
@@ -17,37 +17,37 @@ export interface DriverSurface {
   /**
    * Surface unique id
    */
-  readonly id: string;
+  readonly id: string
 
   /**
    * Should the surface be completely ignored by the script.
    */
-  readonly ignore: boolean;
+  readonly ignore: boolean
 
   /**
    * The area in which windows are placed.
    */
-  readonly workingArea: Readonly<Rect>;
+  readonly workingArea: Readonly<Rect>
 
-  screen: number;
+  screen: number
 
-  group: number;
+  group: number
 
-  desktop: number;
+  desktop: number
 
-  activity: string;
+  activity: string
 
   /**
    * The next surface. The next surface is a virtual desktop, that comes after current one.
    */
-  next(): DriverSurface | null;
+  next(): DriverSurface | null
 }
 
 export class DriverSurfaceImpl implements DriverSurface {
-  public readonly id: string;
-  public readonly ignore: boolean;
-  public workingArea: Rect;
-  private _group: number;
+  public readonly id: string
+  public readonly ignore: boolean
+  public workingArea: Rect
+  private _group: number
 
   constructor(
     private _screen: number,
@@ -55,32 +55,31 @@ export class DriverSurfaceImpl implements DriverSurface {
     public readonly desktop: number,
     private activityInfo: Plasma.TaskManager.ActivityInfo,
     private config: Config,
-    private proxy: TSProxy,
-    private log: Log
+    private kwinApi: KWin.Api
   ) {
-    this.id = this.generateId();
-    this._group = 0;
+    this.id = this.generateId()
+    this._group = 0
 
     // this.log.log(`surface made with ${_group}`);
 
-    const activityName = activityInfo.activityName(activity);
+    const activityName = activityInfo.activityName(activity)
     this.ignore =
       this.config.ignoreActivity.indexOf(activityName) >= 0 ||
-      this.config.ignoreScreen.indexOf(this.screen) >= 0;
+      this.config.ignoreScreen.indexOf(this.screen) >= 0
 
     this.workingArea = Rect.fromQRect(
-      this.proxy.workspace().clientArea(
+      this.kwinApi.workspace.clientArea(
         0, // This is PlacementArea
         this.screen,
         desktop
       )
-    );
+    )
   }
 
   public next(): DriverSurface | null {
     // This is the last virtual desktop
-    if (this.desktop === this.proxy.workspace().desktops) {
-      return null;
+    if (this.desktop === this.kwinApi.workspace.desktops) {
+      return null
     }
 
     return new DriverSurfaceImpl(
@@ -89,54 +88,53 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.desktop + 1,
       this.activityInfo,
       this.config,
-      this.proxy,
-      this.log
-    );
+      this.kwinApi
+    )
   }
 
   public set screen(screen: number) {
-    this._screen = screen;
+    this._screen = screen
   }
 
   public get screen(): number {
-    return this._screen;
+    return this._screen
   }
 
   public get group(): number {
     if (this._group) {
-      return this._group;
+      return this._group
     }
 
-    let g = this.proxy.getSurfaceGroup(this.desktop, this.screen);
+    let g = this.proxy.getSurfaceGroup(this.desktop, this.screen)
     if (!g) {
-      const customScreenOrder = [4, 1, 3, 2, 5, 6, 7, 8, 9];
-      g = (this.desktop - 1) * 5 + customScreenOrder[this.screen];
-      this.log.log(`initialize ${this.desktop}:${this.screen} to group ${g}`);
-      this.group = g;
+      const customScreenOrder = [4, 1, 3, 2, 5, 6, 7, 8, 9]
+      g = (this.desktop - 1) * 5 + customScreenOrder[this.screen]
+      this.log.log(`initialize ${this.desktop}:${this.screen} to group ${g}`)
+      this.group = g
     }
-    this._group = g;
-    return g;
+    this._group = g
+    return g
   }
 
   public set group(groupID: number) {
-    this.log.log(`setSurfaceGroup: ${this.desktop}:${this.screen} ${groupID}`);
-    this.proxy.setSurfaceGroup(this.desktop, this.screen, groupID);
-    this._group = groupID;
+    this.log.log(`setSurfaceGroup: ${this.desktop}:${this.screen} ${groupID}`)
+    this.proxy.setSurfaceGroup(this.desktop, this.screen, groupID)
+    this._group = groupID
   }
 
   public toString(): string {
-    const activityName = this.activityInfo.activityName(this.activity);
-    return `DriverSurface(${this.screen}, ${activityName}, ${this.desktop})`;
+    const activityName = this.activityInfo.activityName(this.activity)
+    return `DriverSurface(${this.screen}, ${activityName}, ${this.desktop})`
   }
 
   private generateId(): string {
-    let path = String(this.screen);
+    let path = String(this.screen)
     if (this.config.layoutPerActivity) {
-      path += `@${this.activity}`;
+      path += `@${this.activity}`
     }
     if (this.config.layoutPerDesktop) {
-      path += `"#${this.desktop}`;
+      path += `"#${this.desktop}`
     }
-    return path;
+    return path
   }
 }

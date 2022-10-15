@@ -13,16 +13,16 @@ declare namespace KWin {
    * Wrapper for all available KWin API from various places.
    */
   interface Api {
-    workspace: KWin.WorkspaceWrapper;
-    options: KWin.Options;
-    KWin: KWin.KWin;
+    workspace: KWin.WorkspaceWrapper
+    options: KWin.Options
+    KWin: KWin.KWin
   }
 
   interface KWin {
     /**
      * Represents KWin::Script::readConfig
      */
-    readConfig(key: string, defaultValue?: any): any;
+    readConfig(key: string, defaultValue?: any): any
 
     /**
      * Represents KWin::Script::registerShortcut
@@ -32,58 +32,61 @@ declare namespace KWin {
       text: string,
       keySequence: string,
       callback: any
-    ): boolean;
+    ): boolean
 
     /**
      * Enum value of ClientAreaOption enum in KWin::JSEngineGlobalMethodsWrapper
      */
-    PlacementArea: number;
+    PlacementArea: number
   }
 
   interface WorkspaceWrapper {
     /* read-only */
-    readonly activeScreen: number;
-    readonly currentActivity: string;
-    readonly numScreens: number;
+    readonly activeScreen: number
+    readonly currentActivity: string
+    readonly numScreens: number
 
     /* read-write */
-    activeClient: KWin.Client;
-    currentDesktop: number;
-    desktops: number;
+    activeClient: KWin.Client
+    currentDesktop: number
+    desktops: number
 
     /* signals */
-    activitiesChanged: QSignal;
-    activityAdded: QSignal;
-    activityRemoved: QSignal;
-    clientAdded: QSignal;
-    clientMaximizeSet: QSignal;
-    clientMinimized: QSignal;
-    clientRemoved: QSignal;
-    clientUnminimized: QSignal;
-    currentActivityChanged: QSignal;
-    currentDesktopChanged: QSignal;
-    numberDesktopsChanged: QSignal;
-    numberScreensChanged: QSignal;
-    screenResized: QSignal;
-    killWindowCalled: QSignal;
-    workspaceDestroyed: QSignal;
+    activitiesChanged: QSignal
+    activityAdded: QSignal
+    activityRemoved: QSignal
+    clientAdded: QSignal
+    clientMaximizeSet: QSignal
+    clientMinimized: QSignal
+    clientRemoved: QSignal
+    clientUnminimized: QSignal
+    currentActivityChanged: QSignal
+    currentDesktopChanged: QSignal
+    numberDesktopsChanged: QSignal
+    numberScreensChanged: QSignal
+    screenResized: QSignal
+    killWindowCalled: QSignal
+    workspaceDestroyed: QSignal
 
     /* functions */
-    clientList(): Client[];
-    clientArea(option: number, screen: number, desktop: number): QRect;
-    // setWindowHidden(window: Client, isHidden: boolean): boolean;
-    // setWindowHidden(): boolean;
-    setWindowHidden(client: KWin.Client, isHidden: boolean): boolean;
-    isWindowHidden(client: KWin.Client): boolean;
-    slotWindowToDesktopDown(): void;
+    clientList(): Client[]
+    // NOTE: These are kept while resolving merge conflicts
+    // keeping them here for later
+    // clientArea(option: number, screen: number, desktop: number): QRect;
+    // // setWindowHidden(window: Client, isHidden: boolean): boolean;
+    // // setWindowHidden(): boolean;
+    // setWindowHidden(client: KWin.Client, isHidden: boolean): boolean;
+    // isWindowHidden(client: KWin.Client): boolean;
+    // slotWindowToDesktopDown(): void;
 
-    showOutline(geometry: QRect): void;
-    supportInformation(): string;
+    // showOutline(geometry: QRect): void;
+    // supportInformation(): string;
+    clientArea(option: number, screen: number, desktop: number): QRectF
   }
 
   interface Options {
     /* signal */
-    configChanged: QSignal;
+    configChanged: QSignal
   }
 
   /**
@@ -95,222 +98,222 @@ declare namespace KWin {
     /**
      * On which activities the toplevel is present
      */
-    readonly activities: string[] /* Not exactly `Array` */;
+    readonly activities: string[] /* Not exactly `Array` */
 
     /**
      * Whether the window is a dialog window.
      */
-    readonly dialog: boolean;
+    readonly dialog: boolean
 
     /**
      * TODO: ???
      */
-    readonly resourceClass: QByteArray;
+    readonly resourceClass: QByteArray
 
     /**
      * TODO: ???
      */
-    readonly resourceName: QByteArray;
+    readonly resourceName: QByteArray
 
     /**
      * On which screen toplevel is
      */
-    readonly screen: number;
+    readonly screen: number
 
     /**
      * Whether the window is a splashscreen.
      */
-    readonly splash: boolean;
+    readonly splash: boolean
 
     /**
      * Whether the window is a utility window, such as a tool window.
      */
-    readonly utility: boolean;
+    readonly utility: boolean
 
     /**
      * Window id in KWin
      */
-    readonly windowId: number;
+    readonly windowId: number
 
     /**
      * Window role property
      */
-    readonly windowRole: QByteArray;
+    readonly windowRole: QByteArray
 
     /**
      * Client position
      */
-    readonly clientPos: QPoint;
+    readonly clientPos: QPoint
 
     /**
      * Client size
      */
-    readonly clientSize: QSize;
+    readonly clientSize: QSize
 
     /**
      * TODO: I could not find anything about signal in the KWin source.
-     * Probably it does not exist here. It exists in KWin::AbstractClient though.
+     * Probably it does not exist here. It exists in KWin::Window though.
      */
-    activitiesChanged: QSignal;
+    activitiesChanged: QSignal
 
     /**
      * This signal is emitted when the Toplevel's frame geometry changes.
      */
-    frameGeometryChanged: QSignal;
+    frameGeometryChanged: QSignal
 
     /**
      * Emitted whenever the Toplevel's screen changes. This can happen either in consequence to
      * a screen being removed/added or if the Toplevel's geometry changes.
      */
-    screenChanged: QSignal;
+    screenChanged: QSignal
 
     /**
      * Emitted when the Toplevel is shown?
      */
-    windowShown: QSignal;
+    windowShown: QSignal
   }
 
   /**
-   * Client, also known as window. Represents KWin::AbstractClient.
+   * Client, also known as window. Represents KWin::Window.
    */
   interface Client extends Toplevel {
     /**
      * Whether the window is active.
      */
-    readonly active: boolean;
+    readonly active: boolean
 
     /**
      * Window caption (The text in the titlebar).
      */
-    readonly caption: string;
+    readonly caption: string
 
     /**
      * Maximum allowed size for a window.
      */
-    readonly maxSize: QSize;
+    readonly maxSize: QSize
 
     /**
      * Minimum allowed size for a window.
      */
-    readonly minSize: QSize;
+    readonly minSize: QSize
 
     /**
      * Whether the window is modal or not.
      */
-    readonly modal: boolean;
+    readonly modal: boolean
 
     /**
      * Whether the window is currently being moved by the user.
      */
-    readonly move: boolean;
+    readonly move: boolean
 
     /**
      * Whether the window is currently being resized by the user.
      */
-    readonly resize: boolean;
+    readonly resize: boolean
 
     /**
      * Whether the window is resizable
      */
-    readonly resizeable: boolean;
+    readonly resizeable: boolean
 
     /**
      * Whether the window is any of special windows types (desktop, dock, splash, ...),
      * i.e. window types that usually don't have a window frame and the user does not use window
      * management (moving, raising,...) on them.
      */
-    readonly specialWindow: boolean;
+    readonly specialWindow: boolean
 
     /**
      * Whether the windows is transient to an other windows, i.e. it is a sub window belonging to
      * a main window
      */
-    readonly transient: boolean;
+    readonly transient: boolean
 
     /**
      * The desktop this window is on. If the window is on all desktops the property has value -1.
      */
-    desktop: number;
+    desktop: number
 
     /**
      * Whether the window is fullscreen
      */
-    fullScreen: boolean;
+    fullScreen: boolean
 
     /**
      * This property holds the geometry of the Toplevel, excluding invisible
      * portions, e.g. server-side and client-side drop-shadows, etc.
      */
-    frameGeometry: QRect;
+    frameGeometry: QRectF
 
     /**
      * Whether the window is set to be above all
      */
-    keepAbove: boolean;
+    keepAbove: boolean
 
     /**
      * Whether the window is set to be below all
      */
-    keepBelow: boolean;
+    keepBelow: boolean
 
     /**
      * Whether the window is minimized
      */
-    minimized: boolean;
+    minimized: boolean
 
     /**
      * Whether the window has borders (window decorations)
      */
-    noBorder: boolean;
+    noBorder: boolean
 
     /**
      * Whether the window is set to be on all desktops
      */
-    onAllDesktops: boolean;
+    onAllDesktops: boolean
 
     /**
      * Whether the Client is shaded.
      */
-    shade: boolean;
+    shade: boolean
 
-    opacity: number;
+    opacity: number
 
-    deleted: boolean;
+    deleted: boolean
 
-    pid: number;
+    pid: number
 
-    closeable: boolean;
+    closeable: boolean
 
-    wantsInput: boolean;
+    wantsInput: boolean
 
     /**
      * Whether the window shading state changed
      */
-    shadeChanged: QSignal;
+    shadeChanged: QSignal
 
     /**
      * @see active
      */
-    activeChanged: QSignal;
+    activeChanged: QSignal
 
     /**
      * @see active
      */
-    desktopChanged: QSignal;
+    desktopChanged: QSignal
 
     /**
      * @see move
      */
-    moveResizedChanged: QSignal;
+    moveResizedChanged: QSignal
 
-    setHidden(isHidden: boolean): void;
+    setHidden(isHidden: boolean): void
 
-    isHidden(): boolean;
+    isHidden(): boolean
 
-    clientMaximizedStateChanged: QSignal;
+    clientMaximizedStateChanged: QSignal
 
-    windowClosed: QSignal;
+    windowClosed: QSignal
 
-    fullScreenChanged: QSignal;
+    fullScreenChanged: QSignal
   }
 }
