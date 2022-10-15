@@ -29,7 +29,7 @@ export interface Config {
   //#endregion
 
   //#region Behavior
-  newWindowAsMaster: boolean
+  newWindowSpawnLocation: string
   moveBetweenSurfaces: boolean
   mouseDragInsert: boolean
   //#endregion
