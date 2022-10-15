@@ -25,7 +25,7 @@ export interface Driver {
   /**
    * All the surfaces/screens currently possess by the KWin
    */
-  readonly screens: DriverSurface[]
+  screens(activity: string, desktop: number): DriverSurface[]
 
   /**
    * Surface (screen) of the current window
@@ -116,14 +116,14 @@ export class DriverImpl implements Driver {
     }
   }
 
-  public get screens(): DriverSurface[] {
+  public screens(activity: string, desktop: number): DriverSurface[] {
     const screensArr = []
     for (let screen = 0; screen < this.kwinApi.workspace.numScreens; screen++) {
       screensArr.push(
         new DriverSurfaceImpl(
           screen,
-          this.kwinApi.workspace.currentActivity,
-          this.kwinApi.workspace.currentDesktop,
+          activity,
+          desktop,
           this.qml.activityInfo,
           this.config,
           this.kwinApi
@@ -377,6 +377,12 @@ export class DriverImpl implements Driver {
     })
 
     this.connect(client.screenChanged, () => {
+      for (const surf of this.controller.screens()) {
+        if ((surf as DriverSurfaceImpl).screen == client.screen) {
+          window.surface = surf
+          break
+        }
+      }
       this.controller.onWindowScreenChanged(window)
     })
 

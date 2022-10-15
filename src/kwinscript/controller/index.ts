@@ -28,7 +28,7 @@ export interface Controller {
   /**
    * A bunch of surfaces, that represent the user's screens.
    */
-  readonly screens: DriverSurface[]
+  screens(activity?: string, desktop?: number): DriverSurface[]
   /**
    * Current active window. In other words the window, that has focus.
    */
@@ -196,8 +196,20 @@ export class ControllerImpl implements Controller {
     this.engine.arrange()
   }
 
-  public get screens(): DriverSurface[] {
-    return this.driver.screens
+  public screens(activity?: string, desktop?: number): DriverSurface[] {
+    if (typeof activity === 'undefined' && this.currentActivity) {
+      activity = this.currentActivity
+    } else if (typeof activity === 'undefined') {
+      return []
+    }
+
+    if (typeof desktop === 'undefined' && this.currentDesktop) {
+      desktop = this.currentDesktop
+    } else if (typeof desktop === 'undefined') {
+      return []
+    }
+
+    return this.driver.screens(activity, desktop)
   }
 
   public get currentWindow(): EngineWindow | null {

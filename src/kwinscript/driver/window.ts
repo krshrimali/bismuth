@@ -99,6 +99,7 @@ export interface DriverWindow {
 
 export class DriverWindowImpl implements DriverWindow {
   public readonly id: string
+  private _screen: number
 
   public get fullScreen(): boolean {
     return this.client.fullScreen
@@ -148,7 +149,7 @@ export class DriverWindowImpl implements DriverWindow {
   }
 
   public get screen(): number {
-    return this.client.screen
+    return this._screen
   }
 
   public get minimized(): boolean {
@@ -184,7 +185,7 @@ export class DriverWindowImpl implements DriverWindow {
         : this.kwinApi.workspace.currentDesktop
 
     return new DriverSurfaceImpl(
-      this.client.screen,
+      this._screen,
       activity,
       desktop,
       this.qml.activityInfo,
@@ -201,6 +202,8 @@ export class DriverWindowImpl implements DriverWindow {
     if (this.client.desktop !== surfImpl.desktop) {
       this.client.desktop = surfImpl.desktop
     }
+
+    this._screen = surfImpl.screen
   }
 
   private noBorderManaged: boolean
@@ -224,6 +227,7 @@ export class DriverWindowImpl implements DriverWindow {
     this.maximized = false
     this.noBorderManaged = false
     this.noBorderOriginal = client.noBorder
+    this._screen = client.screen
   }
 
   public static generateID(client: KWin.Client): string {
