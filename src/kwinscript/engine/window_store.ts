@@ -6,6 +6,8 @@
 import { EngineWindow } from './window'
 
 import { DriverSurface } from '../driver/surface'
+import { Config } from '../config'
+import { Log } from '../util/log'
 
 /**
  * Window storage facility with convenient window filters built-in.
@@ -56,6 +58,7 @@ export interface WindowStore {
    * Remove window from the store
    */
   remove(window: EngineWindow): void
+  contains(window: EngineWindow): boolean
 
   /**
    * Move srcWin to the destWin position (before/after)
@@ -79,7 +82,11 @@ export class WindowStoreImpl implements WindowStore {
   /**
    * @param list window list to initialize from
    */
-  constructor(public list: EngineWindow[] = []) {}
+  constructor(
+    private config: Config,
+    private log: Log,
+    public list: EngineWindow[] = []
+  ) {}
 
   public move(
     srcWin: EngineWindow,
@@ -143,6 +150,10 @@ export class WindowStoreImpl implements WindowStore {
 
   public unshift(window: EngineWindow): void {
     this.list.unshift(window)
+  }
+
+  public contains(window: EngineWindow): boolean {
+    return this.list.find((win) => win.id == window.id) != undefined
   }
 
   public visibleWindowsOn(surf: DriverSurface): EngineWindow[] {

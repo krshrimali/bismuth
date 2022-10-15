@@ -3,14 +3,16 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { WindowsLayout } from ".";
+import { LayoutState, WindowsLayout } from '.'
 import {
   RotateLayoutPart,
   HalfSplitLayoutPart,
   StackLayoutPart,
-} from "./layout_part";
+} from './layout_part'
 
-import { WindowState, EngineWindow } from "../window";
+import { TSProxy } from '../../extern/proxy'
+
+import { WindowState, EngineWindow } from '../window'
 
 import {
   Action,
@@ -21,63 +23,72 @@ import {
   Rotate,
   RotateReverse,
   RotatePart,
-} from "../../controller/action";
+} from '../../controller/action'
 
-import { clip, slide } from "../../util/func";
-import { Rect, RectDelta } from "../../util/rect";
-import { Config } from "../../config";
-import { Controller } from "../../controller";
-import { Engine } from "..";
+import { clip, slide } from '../../util/func'
+import { Rect, RectDelta } from '../../util/rect'
+import { Config } from '../../config'
+import { Controller } from '../../controller'
+import { Engine } from '..'
 
 export default class TileLayout implements WindowsLayout {
-  public static readonly MIN_MASTER_RATIO = 0.2;
-  public static readonly MAX_MASTER_RATIO = 0.8;
-  public static readonly id = "TileLayout";
-  public readonly classID = TileLayout.id;
-  public readonly name = "Tile Layout";
-  public readonly icon = "bismuth-tile";
+  public static readonly MIN_MASTER_RATIO = 0.2
+  public static readonly MAX_MASTER_RATIO = 0.8
+  public static readonly id = 'TileLayout'
+  public readonly classID = TileLayout.id
+  public readonly name = 'Tile Layout'
+  public readonly icon = 'bismuth-tile'
 
   public get hint(): string {
-    return String(this.numMaster);
+    return String(this.numMaster)
   }
 
   private parts: RotateLayoutPart<
     HalfSplitLayoutPart<RotateLayoutPart<StackLayoutPart>, StackLayoutPart>
-  >;
+  >
 
   private get numMaster(): number {
-    return this.parts.inner.primarySize;
+    return this.parts.inner.primarySize
   }
 
   private set numMaster(value: number) {
-    this.parts.inner.primarySize = value;
+    this.parts.inner.primarySize = value
   }
 
   private get masterRatio(): number {
-    return this.parts.inner.ratio;
+    return this.parts.inner.ratio
   }
 
   private set masterRatio(value: number) {
-    this.parts.inner.ratio = value;
+    this.parts.inner.ratio = value
   }
 
-  private config: Config;
+  private config: Config
+  private state: LayoutState
 
-  constructor(config: Config) {
-    this.config = config;
+  constructor(
+    config: Config,
+    private proxy: TSProxy,
+    public readonly uid: string
+  ) {
+    this.config = config
+    this.state = new LayoutState(this.proxy, uid, this.classID)
 
     this.parts = new RotateLayoutPart(
       new HalfSplitLayoutPart(
         new RotateLayoutPart(new StackLayoutPart(this.config)),
         new StackLayoutPart(this.config)
       )
-    );
+    )
 
-    const masterPart = this.parts.inner;
+    const masterPart = this.parts.inner
     masterPart.gap =
       masterPart.primary.inner.gap =
       masterPart.secondary.gap =
-        this.config.tileLayoutGap;
+        this.config.tileLayoutGap
+
+    this.parts.angle = this.state.rotation
+    this.numMaster = this.state.numMasterTiles
   }
 
   public adjust(
@@ -86,7 +97,7 @@ export default class TileLayout implements WindowsLayout {
     basis: EngineWindow,
     delta: RectDelta
   ): void {
-    this.parts.adjust(area, tiles, basis, delta);
+    this.parts.adjust(area, tiles, basis, delta)
   }
 
   public apply(
@@ -94,18 +105,18 @@ export default class TileLayout implements WindowsLayout {
     tileables: EngineWindow[],
     area: Rect
   ): void {
-    tileables.forEach((tileable) => (tileable.state = WindowState.Tiled));
+    tileables.forEach((tileable) => (tileable.state = WindowState.Tiled))
 
     this.parts.apply(area, tileables).forEach((geometry, i) => {
-      tileables[i].geometry = geometry;
-    });
+      tileables[i].geometry = geometry
+    })
   }
 
   public clone(): WindowsLayout {
-    const other = new TileLayout(this.config);
-    other.masterRatio = this.masterRatio;
-    other.numMaster = this.numMaster;
-    return other;
+    const other = new TileLayout(this.config, this.proxy, this.uid)
+    other.masterRatio = this.masterRatio
+    other.numMaster = this.numMaster
+    return other
   }
 
   public executeAction(engine: Engine, action: Action): void {
@@ -114,36 +125,40 @@ export default class TileLayout implements WindowsLayout {
         slide(this.masterRatio, -0.05),
         TileLayout.MIN_MASTER_RATIO,
         TileLayout.MAX_MASTER_RATIO
-      );
+      )
     } else if (action instanceof IncreaseLayoutMasterAreaSize) {
       this.masterRatio = clip(
         slide(this.masterRatio, +0.05),
         TileLayout.MIN_MASTER_RATIO,
         TileLayout.MAX_MASTER_RATIO
-      );
+      )
     } else if (action instanceof IncreaseMasterAreaWindowCount) {
       // TODO: define arbitrary constant
       if (this.numMaster < 10) {
-        this.numMaster += 1;
+        this.numMaster += 1
+        this.state.numMasterTiles = this.numMaster
       }
-      engine.showLayoutNotification();
+      engine.showLayoutNotification()
     } else if (action instanceof DecreaseMasterAreaWindowCount) {
       if (this.numMaster > 0) {
-        this.numMaster -= 1;
+        this.numMaster -= 1
+        this.state.numMasterTiles = this.numMaster
       }
-      engine.showLayoutNotification();
+      engine.showLayoutNotification()
     } else if (action instanceof Rotate) {
-      this.parts.rotate(90);
+      this.parts.rotate(90)
+      this.state.rotation = this.parts.angle
     } else if (action instanceof RotateReverse) {
-      this.parts.rotate(-90);
+      this.parts.rotate(-90)
+      this.state.rotation = this.parts.angle
     } else if (action instanceof RotatePart) {
-      this.parts.inner.primary.rotate(90);
+      this.parts.inner.primary.rotate(90)
     } else {
-      action.executeWithoutLayoutOverride();
+      action.executeWithoutLayoutOverride()
     }
   }
 
   public toString(): string {
-    return `TileLayout(nmaster=${this.numMaster}, ratio=${this.masterRatio})`;
+    return `TileLayout(nmaster=${this.numMaster}, ratio=${this.masterRatio})`
   }
 }

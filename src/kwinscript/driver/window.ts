@@ -10,7 +10,7 @@ import { clip, matchWords } from '../util/func'
 import { Config } from '../config'
 import { Log } from '../util/log'
 import { TSProxy } from '../extern/proxy'
-import { EngineWindow } from '../engine/window'
+import { EngineWindow, WindowConfig } from '../engine/window'
 
 /**
  * Hijack kwin's desktop module to gain the ability to hide and show windows
@@ -170,6 +170,17 @@ export class DriverWindowImpl implements DriverWindow {
 
   public set minimized(min: boolean) {
     this.client.minimized = min
+
+    const state = JSON.parse(
+      this.proxy.getWindowState(this.client.windowId.toString())
+    ) as WindowConfig
+
+    state.minimized = min
+
+    this.proxy.putWindowState(
+      this.client.windowId.toString(),
+      JSON.stringify(state)
+    )
   }
 
   public get shaded(): boolean {
@@ -291,7 +302,8 @@ export class DriverWindowImpl implements DriverWindow {
     public readonly client: KWin.Client,
     private qml: Bismuth.Qml.Main,
     private config: Config,
-    private kwinApi: KWin.Api
+    private kwinApi: KWin.Api,
+    private proxy: TSProxy
   ) {
     this.id = DriverWindowImpl.generateID(client)
     this.maximized = false
@@ -332,7 +344,7 @@ export class DriverWindowImpl implements DriverWindow {
     }
     this.hidden = false
 
-    if (this.client.move || this.client.resize || this.hidden) {
+    if (this.client.move || this.client.resize) {
       return
     }
 

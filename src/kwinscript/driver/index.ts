@@ -192,7 +192,13 @@ export class DriverImpl implements Driver {
       (client: KWin.Client) => DriverWindowImpl.generateID(client),
       (client: KWin.Client) =>
         new EngineWindowImpl(
-          new DriverWindowImpl(client, this.qml, this.config, this.kwinApi),
+          new DriverWindowImpl(
+            client,
+            this.qml,
+            this.config,
+            this.kwinApi,
+            this.proxy
+          ),
           this.config,
           this.log,
           this.proxy
@@ -287,18 +293,18 @@ export class DriverImpl implements Driver {
    * Manage window with the particular KWin clientship
    * @param client window client object specified by KWin
    */
-  private manageWindow(client: KWin.Client): void {
+  private manageWindow(client: KWin.Client): EngineWindow | null {
     // Add window to our window map
     const window = this.windowMap.add(client)
 
     if (window.shouldIgnore) {
       this.windowMap.remove(client)
-      return
+      return null
     }
 
     this.bindWindowEvents(window, client)
 
-    this.controller.manageWindow(window)
+    return window
   }
 
   public showNotification(
@@ -451,13 +457,15 @@ export class DriverImpl implements Driver {
     })
 
     this.connect(client.screenChanged, () => {
+      const oldSurface = window.window.surface
+
       for (const surf of this.controller.screens()) {
         if ((surf as DriverSurfaceImpl).screen == client.screen) {
           window.surface = surf
           break
         }
       }
-      this.controller.onWindowScreenChanged(window)
+      this.controller.onWindowScreenChanged(window, oldSurface)
     })
 
     this.connect(client.activitiesChanged, () =>

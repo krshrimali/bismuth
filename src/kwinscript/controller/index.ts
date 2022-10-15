@@ -289,7 +289,8 @@ export class ControllerImpl implements Controller {
 
   public onWindowAdded(window: EngineWindow): void {
     this.log.log(['onWindowAdded', { window }])
-    this.engine.manage(window.surface)
+    this.engine.manage(window)
+    this.engine.arrange(window.surface)
 
     // /* move window to next surface if the current surface is "full" */
     // if (window.tileable) {
