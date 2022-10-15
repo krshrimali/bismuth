@@ -98,7 +98,10 @@ export interface Controller {
    * React to window changing screens
    * @param window the window whose screen has changed
    */
-  onWindowScreenChanged(window: EngineWindow): void
+  onWindowScreenChanged(
+    window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void
 
   onWindowActivityChanged(window: EngineWindow): void
   onWindowDesktopChanged(window: EngineWindow): void
@@ -173,6 +176,8 @@ export interface Controller {
    */
   manageWindow(win: EngineWindow): void
 
+  restoreWindows(windows: EngineWindow[]): void
+
   /**
    * The function is called when the script is destroyed.
    * In particular, it's called by QML Component.onDestroyed
@@ -197,7 +202,7 @@ export class ControllerImpl implements Controller {
     private log: Log,
     private proxy: TSProxy
   ) {
-    this.engine = new EngineImpl(this, config, log)
+    this.engine = new EngineImpl(this, config, proxy, log)
     this.driver = new DriverImpl(qmlObjects, kwinApi, this, config, log, proxy)
   }
 
@@ -210,7 +215,7 @@ export class ControllerImpl implements Controller {
 
     this.driver.manageWindows()
 
-    // this.engine.arrange()
+    this.engine.arrange()
   }
 
   public screens(activity?: string, desktop?: number): DriverSurface[] {
@@ -284,7 +289,7 @@ export class ControllerImpl implements Controller {
 
   public onWindowAdded(window: EngineWindow): void {
     this.log.log(['onWindowAdded', { window }])
-    this.engine.manage(window)
+    this.engine.manage(window.surface)
 
     // /* move window to next surface if the current surface is "full" */
     // if (window.tileable) {
@@ -369,6 +374,7 @@ export class ControllerImpl implements Controller {
         } else {
           this.engine.windows.swap(window, targets[0])
         }
+        this.engine.saveWindows()
         this.engine.arrange(window.surface)
         return
       }
@@ -431,12 +437,19 @@ export class ControllerImpl implements Controller {
     this.log.log(['onWindowGeometryChanged', { window }])
   }
 
-  public onWindowScreenChanged(_window: EngineWindow): void {
+  public onWindowScreenChanged(
+    _window: EngineWindow,
+    oldSurface: DriverSurface | null
+  ): void {
     //TODO only arrange the surface the window came from and went to
     if (!_window.surface) {
       return
     }
-    this.moveWindowToSurface(_window, _window.surface)
+    // this.moveWindowToSurface(_window, _window.surface)
+    if (oldSurface) {
+      this.engine.arrange(oldSurface)
+    }
+    this.engine.arrange(_window.surface)
   }
 
   public onWindowActivityChanged(window: EngineWindow): void {
@@ -497,6 +510,10 @@ export class ControllerImpl implements Controller {
 
   public manageWindow(win: EngineWindow): void {
     this.engine.manage(win)
+  }
+
+  public restoreWindows(windows: EngineWindow[]): void {
+    this.engine.restoreWindows(windows)
   }
 
   public moveWindowToSurface(

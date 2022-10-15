@@ -7,6 +7,11 @@
 #include <KLocalizedString>
 #include <QAction>
 #include <QKeySequence>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 
 #include "controller.hpp"
 #include "logger.hpp"
@@ -110,6 +115,237 @@ QJSValue TSProxy::jsConfig()
     setStrArrayProp("ignoreScreen", m_config.ignoreScreen(), true);
 
     return configJSObject;
+}
+
+QString TSProxy::getLayoutState(QString stateId)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-layoutstates.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+    QJsonObject states = root["LayoutStates"].toObject();
+
+    QJsonDocument state = QJsonDocument(states[stateId].toObject());
+    QString json = state.toJson();
+    // qWarning() << "got json layoutState: " << json;
+
+    if (json.isEmpty()) {
+      return "{}";
+    }
+    return json;
+}
+
+void TSProxy::putLayoutState(QString stateId, QString state)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-layoutstates.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+
+    QJsonDocument newDoc = QJsonDocument::fromJson(state.toUtf8());
+    QJsonObject newObj = newDoc.object();
+
+    QJsonObject states = root["LayoutStates"].toObject();
+
+    states[stateId] = newObj;
+
+    root["LayoutStates"] = states;
+
+    QJsonDocument writeDoc = QJsonDocument(root);
+
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    // file.seek(0);
+    file.write(writeDoc.toJson());
+    file.close();
+}
+
+QString TSProxy::getWindowState(QString windowId)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-windowstates.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    // qWarning() << fileText;
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject states = doc.object()["WindowStates"].toObject();
+
+    // QJsonValue value = obj.value(windowId);
+
+    // qWarning() << value;
+    // QJsonObject item = value.toObject();
+    // qWarning() << tr("QJsonObject of description: ") << item;
+
+    // /* in case of string value get value and convert into string*/
+    // qWarning() << tr("QJsonObject[appName] of description: ") << item["description"];
+    // QJsonValue subobj = item["description"];
+    // qWarning() << subobj.toString();
+
+    // /* in case of array get array and convert into string*/
+    // qWarning() << tr("QJsonObject[appName] of value: ") << item["imp"];
+    // QJsonArray test = item["imp"].toArray();
+    // qWarning() << test[1].toString();
+
+    // qWarning() << "returning " << obj[windowId].toInt();
+    // return obj[windowId].toInt();
+
+
+    QJsonDocument newState = QJsonDocument(states[windowId].toObject());
+    QString json = newState.toJson();
+    // qWarning() << "got json windowState: " << json;
+
+    if (json.isEmpty()) {
+      return "{}";
+    }
+    return json;
+}
+
+void TSProxy::putWindowState(QString windowId, QString state)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-windowstates.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+    QJsonObject states = root["WindowStates"].toObject();
+
+    // QJsonValue value = obj.value(windowId);
+
+    // if (obj[windowId].toInt() == groupId) {
+    //   file.close();
+    //   return;
+    // }
+
+    // qWarning() << fileText;
+    // qWarning() << obj[windowId];
+
+    // qWarning() << "changing group from " << obj[windowId].toInt() << " to " << groupId;
+    // value.fromVariant(groupId);
+    // obj["group"] = groupId;
+
+    states[windowId] = QJsonDocument::fromJson(state.toUtf8()).object();
+    root["WindowStates"] = states;
+
+
+    // doc.fromVariant(value.toObject());
+    // QJsonDocument newDoc = QJsonDocument(obj);
+
+    // qWarning() << "json: " << newDoc.toJson();
+
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    file.write(QJsonDocument(root).toJson());
+    file.close();
+}
+
+QString TSProxy::getWindowList()
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-windowlist.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+    // QJsonObject list = root["WindowList"].toObject();
+
+    QJsonArray list = QJsonArray(root["WindowList"].toArray());
+    QJsonDocument listDoc = QJsonDocument(list);
+    QString json = listDoc.toJson();
+    // qWarning() << "got json list: " << json;
+
+    // if (json.isEmpty() || !root["WindowList"].toArray().count()) {
+    //   return "[]";
+    // }
+    return json;
+}
+
+void TSProxy::putWindowList(const QString list)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-windowlist.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+
+    QJsonDocument newDoc = QJsonDocument::fromJson(list.toUtf8());
+    QJsonArray newList = newDoc.array();
+
+    // QJsonArray list = root["WindowList"].toArray();
+    // QJsonArray list = QJsonArray(newObj.toArray());
+
+    // root[stateId] = newObj;
+
+    root["WindowList"] = newList;
+
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    file.write(QJsonDocument(root).toJson());
+    file.close();
+}
+
+int TSProxy::getSurfaceGroup(int desktop, int screen)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-surfacegroups.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+    QJsonObject surfs = root["Surfaces"].toObject();
+
+    QString id = QString("%1:%2").arg(desktop).arg(screen);
+
+    return surfs[id].toObject()["group"].toInt();
+}
+
+void TSProxy::setSurfaceGroup(int desktop, int screen, int groupID)
+{
+    QString fileText;
+    QFile file;
+    file.setFileName("/tmp/kwin-bismuth-surfacegroups.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    fileText = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(fileText.toUtf8());
+    QJsonObject root = doc.object();
+    QJsonObject surfs = root["Surfaces"].toObject();
+
+    QString id = QString("%1:%2").arg(desktop).arg(screen);
+
+    QJsonObject surf = surfs[id].toObject();
+    surf["group"] = groupID;
+
+    surfs[id] = surf;
+    root["Surfaces"] = surfs;
+
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    file.write(QJsonDocument(root).toJson());
+    file.close();
 }
 
 void TSProxy::registerShortcut(const QJSValue &tsAction)

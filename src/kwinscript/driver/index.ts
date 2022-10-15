@@ -194,7 +194,8 @@ export class DriverImpl implements Driver {
         new EngineWindowImpl(
           new DriverWindowImpl(client, this.qml, this.config, this.kwinApi),
           this.config,
-          this.log
+          this.log,
+          this.proxy
         )
     )
     this.entered = false
