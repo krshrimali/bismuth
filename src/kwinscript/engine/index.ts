@@ -116,6 +116,12 @@ export interface Engine {
   swapDirOrMoveFloat(dir: Direction): void
 
   /**
+   * Move the active window to the next surface in the given direction
+   * @param direction The direction to move in
+   */
+  moveToSurfaceDir(direction: Direction): void
+
+  /**
    * Set the current window as the "master".
    *
    * The "master" window is simply the first window in the window list.
@@ -536,6 +542,103 @@ export class EngineImpl implements Engine {
     } else if (EngineWindowImpl.isTiledState(state)) {
       this.swapDirection(dir)
     }
+  }
+
+  public findClosestSurface(
+    window: EngineWindow,
+    dir: Direction,
+    screens: DriverSurface[]
+  ): DriverSurface | null {
+    const screenCandidates = []
+    for (const surf of screens) {
+      switch (dir) {
+        case 'up':
+          if (
+            surf.workingArea.center[1] < window.geometry.center[1] &&
+            overlap(
+              surf.workingArea.x,
+              surf.workingArea.maxX,
+              window.geometry.x,
+              window.geometry.maxX
+            )
+          ) {
+            screenCandidates.push(surf)
+          }
+          break
+        case 'down':
+          if (
+            surf.workingArea.center[1] > window.geometry.center[1] &&
+            overlap(
+              surf.workingArea.x,
+              surf.workingArea.maxX,
+              window.geometry.x,
+              window.geometry.maxX
+            )
+          ) {
+            screenCandidates.push(surf)
+          }
+          break
+        case 'left':
+          if (
+            surf.workingArea.center[0] < window.geometry.center[0] &&
+            overlap(
+              surf.workingArea.y,
+              surf.workingArea.maxY,
+              window.geometry.y,
+              window.geometry.maxY
+            )
+          ) {
+            screenCandidates.push(surf)
+          }
+          break
+        case 'right':
+          if (
+            surf.workingArea.center[0] > window.geometry.center[0] &&
+            overlap(
+              surf.workingArea.y,
+              surf.workingArea.maxY,
+              window.geometry.y,
+              window.geometry.maxY
+            )
+          ) {
+            screenCandidates.push(surf)
+          }
+      }
+    }
+
+    let closestDistance = Infinity
+    let closestScreen: DriverSurface | null = null
+    for (const surf of screenCandidates) {
+      const distance = Math.hypot(
+        surf.workingArea.center[0] - window.geometry.center[0],
+        surf.workingArea.center[1] - window.geometry.center[1]
+      )
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestScreen = surf
+      }
+    }
+
+    return closestScreen
+  }
+
+  public moveToSurfaceDir(dir: Direction): void {
+    const win = this.controller.currentWindow
+    if (!win) {
+      return
+    }
+
+    const screenCandidates = this.controller
+      .screens()
+      .filter((surf) => surf.id != win.surface.id)
+
+    const closestScreen = this.findClosestSurface(win, dir, screenCandidates)
+
+    if (!closestScreen) {
+      return
+    }
+
+    this.controller.moveWindowToSurface(win, closestScreen)
   }
 
   public toggleFloat(window: EngineWindow): void {

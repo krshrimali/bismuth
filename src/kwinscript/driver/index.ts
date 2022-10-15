@@ -69,6 +69,13 @@ export interface Driver {
    * Destroy all callbacks and other non-GC resources
    */
   drop(): void
+
+  /**
+   * Move window to a different surface. This does not trigger re-tiling.
+   * @param window the window to move to @param surface
+   * @param surface the surface to move @param window to
+   */
+  moveWindowToSurface(window: EngineWindow, surface: DriverSurface): void
 }
 
 export class DriverImpl implements Driver {
@@ -114,6 +121,10 @@ export class DriverImpl implements Driver {
         window.window as DriverWindowImpl
       ).client
     }
+  }
+
+  public moveWindowToSurface(win: EngineWindow, surf: DriverSurface): void {
+    win.window.surface = surf
   }
 
   public screens(activity: string, desktop: number): DriverSurface[] {
