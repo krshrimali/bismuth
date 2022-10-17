@@ -11,7 +11,7 @@ export class Rect {
     public height: number
   ) {}
 
-  public static fromQRect(qRect: QRectF): Rect {
+  public static fromQRect(qRect: QRect): Rect {
     return new Rect(qRect.x, qRect.y, qRect.width, qRect.height);
   }
 
@@ -86,7 +86,7 @@ export class Rect {
     );
   }
 
-  public toQRect(): QRectF {
+  public toQRect(): QRect {
     return Qt.rect(this.x, this.y, this.width, this.height);
   }
 

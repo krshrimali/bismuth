@@ -3,19 +3,19 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DriverSurface } from "./surface";
-import { DriverSurfaceImpl } from "./surface";
-import { DriverWindow, DriverWindowImpl } from "./window";
+import { DriverSurface } from './surface'
+import { DriverSurfaceImpl } from './surface'
+import { DriverWindow, DriverWindowImpl } from './window'
 
-import { Controller } from "../controller";
+import { Controller } from '../controller'
 
-import { EngineWindow, EngineWindowImpl } from "../engine/window";
+import { EngineWindow, EngineWindowImpl } from '../engine/window'
 
-import { WindowState } from "../engine/window";
+import { WindowState } from '../engine/window'
 
-import { Config } from "../config";
-import { Log } from "../util/log";
-import { TSProxy } from "../extern/proxy";
+import { Config } from '../config'
+import { Log } from '../util/log'
+import { TSProxy } from '../extern/proxy'
 
 /**
  * Provides convenient interface to KWin functions.
@@ -25,27 +25,27 @@ export interface Driver {
   /**
    * All surfaces/screens possessed by KWin for the given activity and desktop
    */
-  screens(activity: string, desktop: number): DriverSurface[];
+  screens(activity: string, desktop: number): DriverSurface[]
 
   /**
    * The currently active surface
    */
-  currentSurface: DriverSurface;
+  currentSurface: DriverSurface
 
   /**
    * The currently active activity
    */
-  readonly currentActivity: string;
+  readonly currentActivity: string
 
   /**
    * The currently active desktop
    */
-  readonly currentDesktop: number;
+  readonly currentDesktop: number
 
   /**
    * Currently active (i.e. focused) window
    */
-  currentWindow: EngineWindow | null;
+  currentWindow: EngineWindow | null
 
   /**
    * Show a popup notification in the center of the screen.
@@ -59,33 +59,33 @@ export interface Driver {
     hint?: string,
     subtext?: string,
     screen?: number
-  ): void;
+  ): void
 
-  onCurrentDesktopChanged(): void;
+  onCurrentDesktopChanged(): void
 
-  onNumberDesktopsChanged(oldNumDesktops: number): void;
+  onNumberDesktopsChanged(oldNumDesktops: number): void
 
   /**
    * Bind script to the various KWin events
    */
-  bindEvents(): void;
+  bindEvents(): void
 
   /**
    * Manage the windows, that were active before script loading
    */
-  manageWindows(): void;
+  manageWindows(): void
 
   moveWindowToGroup(
     groupId: number,
     window?: EngineWindow
-  ): DriverSurface | null;
+  ): DriverSurface | null
 
-  swapGroupToSurface(groupId: number, screen: number): void;
+  swapGroupToSurface(groupId: number, screen: number): void
 
   /**
    * Destroy all callbacks and other non-GC resources
    */
-  drop(): void;
+  drop(): void
 
   /**
    * Move window to a different surface. This does not trigger re-tiling.
@@ -101,52 +101,54 @@ export class DriverImpl implements Driver {
   // private groupMapSurface: { [desktop: string]: { [screen: string]: number } };
   public get currentSurface(): DriverSurface {
     // this.log.log(
-    //   `for ${this.proxy.workspace().activeScreen} making ${
-    //     this.groupMap[this.proxy.workspace().activeScreen]
+    //   `for ${this.kwinApi.workspace.activeScreen} making ${
+    //     this.groupMap[this.kwinApi.workspace.activeScreen]
     //   }`
     // );
-    const desktop = this.proxy.workspace().currentDesktop;
-    const screen = this.proxy.workspace().activeScreen;
+    const desktop = this.kwinApi.workspace.currentDesktop
+    const screen = this.kwinApi.workspace.activeScreen
     return new DriverSurfaceImpl(
-      this.kwinApi.workspace.activeScreen,
+      screen,
       this.kwinApi.workspace.currentActivity,
-      this.kwinApi.workspace.currentDesktop,
+      desktop,
       this.qml.activityInfo,
       this.config,
-      this.kwinApi
-    );
+      this.proxy,
+      this.kwinApi,
+      this.log
+    )
   }
 
   public set currentSurface(value: DriverSurface) {
-    const kwinSurface = value as DriverSurfaceImpl;
+    const kwinSurface = value as DriverSurfaceImpl
 
     /* NOTE: only supports switching desktops */
     // TODO: focusing window on other screen?
     // TODO: find a way to change activity
 
     if (this.kwinApi.workspace.currentDesktop !== kwinSurface.desktop) {
-      this.kwinApi.workspace.currentDesktop = kwinSurface.desktop;
+      this.kwinApi.workspace.currentDesktop = kwinSurface.desktop
     }
   }
 
   public get currentActivity(): string {
-    return this.kwinApi.workspace.currentActivity;
+    return this.kwinApi.workspace.currentActivity
   }
 
   public get currentDesktop(): number {
-    return this.kwinApi.workspace.currentDesktop;
+    return this.kwinApi.workspace.currentDesktop
   }
 
   public get currentWindow(): EngineWindow | null {
-    const client = this.kwinApi.workspace.activeClient;
-    return client ? this.windowMap.get(client) : null;
+    const client = this.kwinApi.workspace.activeClient
+    return client ? this.windowMap.get(client) : null
   }
 
   public set currentWindow(window: EngineWindow | null) {
     if (window !== null) {
       this.kwinApi.workspace.activeClient = (
         window.window as DriverWindowImpl
-      ).client;
+      ).client
     }
   }
 
@@ -162,10 +164,9 @@ export class DriverImpl implements Driver {
   // }
 
   public screens(activity: string, desktop: number): DriverSurface[] {
-    const screensArr = [];
-<<<<<<< HEAD
-    // for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
-    for (let screen = 0; screen < this.proxy.workspace().numScreens; screen++) {
+    const screensArr = []
+    // for (let screen = 0; screen < this.kwinApi.workspace.numScreens; screen++) {
+    for (let screen = 0; screen < this.kwinApi.workspace.numScreens; screen++) {
       // this.log.log(`for ${screen} making ${this.groupMap[screen]}`);
       screensArr.push(
         new DriverSurfaceImpl(
@@ -175,32 +176,22 @@ export class DriverImpl implements Driver {
           this.qml.activityInfo,
           this.config,
           this.proxy,
+          this.kwinApi,
           this.log
-=======
-    for (let screen = 0; screen < this.kwinApi.workspace.numScreens; screen++) {
-      screensArr.push(
-        new DriverSurfaceImpl(
-          screen,
-          this.kwinApi.workspace.currentActivity,
-          this.kwinApi.workspace.currentDesktop,
-          this.qml.activityInfo,
-          this.config,
-          this.kwinApi
->>>>>>> origin/master
         )
-      );
+      )
     }
-    return screensArr;
+    return screensArr
   }
 
-  private controller: Controller;
-  private windowMap: WrapperMap<KWin.Client, EngineWindow>;
-  private entered: boolean;
+  private controller: Controller
+  private windowMap: WrapperMap<KWin.Client, EngineWindow>
+  private entered: boolean
 
-  private qml: Bismuth.Qml.Main;
-  private kwinApi: KWin.Api;
+  private qml: Bismuth.Qml.Main
+  private kwinApi: KWin.Api
 
-  private registeredConnections: SignalCallbackPair[];
+  private registeredConnections: SignalCallbackPair[]
 
   /**
    * @param qmlObjects objects from QML gui. Required for the interaction with QML, as we cannot access globals.
@@ -215,23 +206,23 @@ export class DriverImpl implements Driver {
     private log: Log,
     private proxy: TSProxy
   ) {
-    this.registeredConnections = [];
+    this.registeredConnections = []
+    this.kwinApi = kwinApi
 
     // we need one unused desktop to store hidden windows on, so add one if needed
-    if (this.proxy.workspace().desktops < 2) {
-      this.proxy.workspace().desktops++;
+    if (this.kwinApi.workspace.desktops < 2) {
+      this.kwinApi.workspace.desktops++
     }
 
     // TODO: find a better way to to this
     if (this.config.preventMinimize && this.config.monocleMinimizeRest) {
-      log.log("preventMinimize is disabled because of monocleMinimizeRest");
-      this.config.preventMinimize = false;
+      log.log('preventMinimize is disabled because of monocleMinimizeRest')
+      this.config.preventMinimize = false
     }
 
-    this.controller = controller;
+    this.controller = controller
     this.windowMap = new WrapperMap(
       (client: KWin.Client) => DriverWindowImpl.generateID(client),
-<<<<<<< HEAD
       (client: KWin.Client) => {
         // const group = this.groupMap[client.windowId];
         // let group = this.groupMapSurface[client.screen];
@@ -247,91 +238,87 @@ export class DriverImpl implements Driver {
             this.qml,
             this.config,
             this.log,
-            this.proxy
+            this.proxy,
+            this.kwinApi
           ),
-=======
-      (client: KWin.Client) =>
-        new EngineWindowImpl(
-          new DriverWindowImpl(client, this.qml, this.config, this.kwinApi),
->>>>>>> origin/master
           this.config,
           this.log,
           this.proxy
-        );
-        return win;
+        )
+        return win
       }
-    );
-    this.entered = false;
-    this.qml = qmlObjects;
-    this.kwinApi = kwinApi;
+    )
+    this.entered = false
+    this.qml = qmlObjects
+    this.kwinApi = kwinApi
   }
 
   public bindEvents(): void {
     const onClientAdded = (client: KWin.Client): void => {
       this.log.log(
         `Client added to desktop ${client.desktop} screen ${client.screen}: ${client}`
-      );
+      )
 
-      const currentDesktop = this.proxy.workspace().currentDesktop;
-      const group = this.controller.currentSurface.group;
+      const currentDesktop = this.kwinApi.workspace.currentDesktop
+      const group = this.controller.currentSurface.group
 
       this.log.log(
         `initially setting client 0x${client.windowId.toString(
           16
         )} to group ${group}`
-      );
+      )
 
       // this.groupMap[client.windowId] = group;
-      const window = this.windowMap.add(client);
+      const window = this.windowMap.add(client)
 
       // this is a new window; don't use whatever group was stored in the cache
-      window.window.group = group;
+      window.window.group = group
 
       // in case a naughty program tried to open on another desktop, force it here
       if (!window.shouldIgnore) {
-        window.desktop = currentDesktop;
+        window.desktop = currentDesktop
       }
 
-      this.controller.onWindowAdded(window);
+      this.controller.onWindowAdded(window)
 
       if (window.state === WindowState.Unmanaged) {
         this.log.log(
           `Window becomes unmanaged and gets removed :( The client was ${client}`
-        );
-        window.window.group = 0;
-        this.windowMap.remove(client);
+        )
+        window.window.group = 0
+        this.windowMap.remove(client)
         // delete this.groupMap[client.windowId];
       } else {
-        this.log.log(`Client is ok, can manage. Bind events now...`);
-        this.bindWindowEvents(window, client);
+        this.log.log(`Client is ok, can manage. Bind events now...`)
+        this.bindWindowEvents(window, client)
       }
 
       if (this.config.keepFloatAbove) {
         if (window.shouldFloat) {
-          (window.window as DriverWindowImpl).client.keepAbove = true;
+          ;(window.window as DriverWindowImpl).client.keepAbove = true
         }
       }
-    };
+    }
 
     const onClientRemoved = (client: KWin.Client): void => {
       if (this.controller.workspaceIsDestroyed) {
-        return;
+        return
       }
 
-      this.log.log(`onClientRemoved ${client.deleted} ${client.pid}`);
-      const window = this.windowMap.get(client);
+      this.log.log(`onClientRemoved ${client.deleted} ${client.pid}`)
+      const window = this.windowMap.get(client)
       if (window) {
-        this.controller.onWindowRemoved(window);
+        this.controller.onWindowRemoved(window)
         // window.window.group = 0;
-        this.windowMap.remove(client);
+        this.windowMap.remove(client)
         // delete this.groupMap[client.windowId];
       }
-    };
+    }
 
     const onWorkspaceDestroyed = (): void => {
-      this.log.log(`onWorkspaceDestroyed`);
-      this.controller.onWorkspaceDestroyed();
-    };
+      this.log.log(`onWorkspaceDestroyed`)
+      this.controller.onWorkspaceDestroyed()
+    }
 
     const onClientMaximizeSet = (
       client: KWin.Client,
@@ -344,55 +331,55 @@ export class DriverImpl implements Driver {
       //   (window.window as DriverWindowImpl).maximized = maximized;
       //   this.controller.onWindowMaximizeChanged(window, maximized);
       // }
-    };
+    }
 
     const onClientMinimized = (client: KWin.Client): void => {
-      this.log.log(`onClientMinimized`);
+      this.log.log(`onClientMinimized`)
       if (this.config.preventMinimize) {
-        client.minimized = false;
-        this.kwinApi.workspace.activeClient = client;
-        return;
+        client.minimized = false
+        this.kwinApi.workspace.activeClient = client
+        return
       }
-      const window = this.windowMap.get(client);
+      const window = this.windowMap.get(client)
 
       if (!window) {
-        return;
+        return
       }
-      window.minimized = true;
+      window.minimized = true
 
-      this.controller.onWindowMinimized(window);
-    };
+      this.controller.onWindowMinimized(window)
+    }
 
     const onClientUnminimized = (client: KWin.Client): void => {
-      const window = this.windowMap.get(client);
-      this.log.log(`onClientUnminimized`);
+      const window = this.windowMap.get(client)
+      this.log.log(`onClientUnminimized`)
 
       if (!window) {
-        return;
+        return
       }
 
-      window.minimized = false;
+      window.minimized = false
 
-      this.controller.onWindowUnminimized(window);
-    };
+      this.controller.onWindowUnminimized(window)
+    }
 
     this.connect(this.kwinApi.workspace.currentActivityChanged, () =>
       this.controller.onCurrentActivityChanged()
-    );
+    )
 
     this.connect(this.kwinApi.workspace.currentDesktopChanged, () =>
       this.controller.onCurrentDesktopChanged()
-    );
+    )
 
     this.connect(this.kwinApi.workspace.numberDesktopsChanged, (num: number) =>
       this.onNumberDesktopsChanged(num)
-    );
+    )
 
-    this.connect(this.kwinApi.workspace.clientAdded, onClientAdded);
-    this.connect(this.kwinApi.workspace.clientRemoved, onClientRemoved);
-    this.connect(this.kwinApi.workspace.clientMaximizeSet, onClientMaximizeSet);
-    this.connect(this.kwinApi.workspace.clientMinimized, onClientMinimized);
-    this.connect(this.kwinApi.workspace.clientUnminimized, onClientUnminimized);
+    this.connect(this.kwinApi.workspace.clientAdded, onClientAdded)
+    this.connect(this.kwinApi.workspace.clientRemoved, onClientRemoved)
+    this.connect(this.kwinApi.workspace.clientMaximizeSet, onClientMaximizeSet)
+    this.connect(this.kwinApi.workspace.clientMinimized, onClientMinimized)
+    this.connect(this.kwinApi.workspace.clientUnminimized, onClientUnminimized)
     // this.connect(
     //   this.kwinApi.workspace.workspaceDestroyed,
     //   onWorkspaceDestroyed
@@ -400,16 +387,16 @@ export class DriverImpl implements Driver {
   }
 
   public manageWindows(): void {
-    const clients = this.kwinApi.workspace.clientList();
+    const clients = this.kwinApi.workspace.clientList()
     // TODO: provide interface for using the "for of" cycle
-    const windows: EngineWindow[] = [];
+    const windows: EngineWindow[] = []
     for (let i = 0; i < clients.length; i++) {
-      const window = this.manageWindow(clients[i]);
+      const window = this.manageWindow(clients[i])
       if (window) {
-        windows.push(window);
+        windows.push(window)
       }
     }
-    this.controller.restoreWindows(windows);
+    this.controller.restoreWindows(windows)
   }
 
   /**
@@ -417,30 +404,30 @@ export class DriverImpl implements Driver {
    * @param client window client object specified by KWin
    */
   private manageWindow(client: KWin.Client): EngineWindow | null {
-    const desktop = this.proxy.workspace().currentDesktop;
+    const desktop = this.kwinApi.workspace.currentDesktop
     // const group = this.controller.currentSurface.group;
     this.log.log(
       `find screen ${client.screen} of ${this.controller.screens().length}`
-    );
+    )
     //FIXME I've seen this crash on restart if kwin is slow to populate the screens
-    const group = this.controller.screens()[client.screen]?.group;
+    const group = this.controller.screens()[client.screen]?.group
 
     this.log.log(
       `initially setting client ${client.windowId} to group ${group}`
-    );
+    )
 
     // Add window to our window map
-    const window = this.windowMap.add(client);
+    const window = this.windowMap.add(client)
 
     if (window.shouldIgnore) {
-      window.window.group = 0;
-      this.windowMap.remove(client);
-      return null;
+      window.window.group = 0
+      this.windowMap.remove(client)
+      return null
     }
 
     // windows that don't have a group stored in the cache go to the active group
     if (!window.window.group) {
-      window.window.group = group;
+      window.window.group = group
     }
 
     // // move windows that load on the hidden desktop to the current desktop
@@ -448,9 +435,9 @@ export class DriverImpl implements Driver {
     //   window.window.desktop = this.currentDesktop;
     // }
 
-    this.bindWindowEvents(window, client);
+    this.bindWindowEvents(window, client)
 
-    return window;
+    return window
   }
 
   public moveWindowToGroup(
@@ -458,40 +445,40 @@ export class DriverImpl implements Driver {
     window?: EngineWindow | null
   ): DriverSurface | null {
     if (!window) {
-      window = this.controller.currentWindow;
+      window = this.controller.currentWindow
     }
     if (!window) {
-      return null;
+      return null
     }
 
     // find if any surface was currently displaying the window's old group
-    const oldGroup = window.window.group;
-    let oldSurf = null;
+    const oldGroup = window.window.group
+    let oldSurf = null
     for (const surf of this.controller.screens()) {
       if (surf.group == oldGroup) {
-        oldSurf = surf;
-        break;
+        oldSurf = surf
+        break
       }
     }
 
     this.log.log(
       `moving window from group ${oldGroup} to group ${groupId} ${window}`
-    );
+    )
 
     // find a surface, if any, to display the window in its new group
     for (const surf of this.controller.screens()) {
       if (surf.group == groupId) {
-        this.log.log(`showing window on surface ${surf.screen}`);
+        this.log.log(`showing window on surface ${surf.screen}`)
 
-        window.surface = surf;
-        return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
+        window.surface = surf
+        return oldSurf ? this.controller.screens()[oldSurf.screen] : null
       }
     }
     // else just hide the window as no surface currently displays its group
 
-    window.window.group = groupId;
-    window.window.hidden = true;
-    return oldSurf ? this.controller.screens()[oldSurf.screen] : null;
+    window.window.group = groupId
+    window.window.hidden = true
+    return oldSurf ? this.controller.screens()[oldSurf.screen] : null
   }
 
   public swapGroupToSurface(groupId: number, screen: number): void {}
@@ -505,20 +492,20 @@ export class DriverImpl implements Driver {
   ): void {
     switch (screen) {
       case 0:
-        this.qml.popupDialog0.show(text, icon, hint, subtext, screen);
-        break;
+        this.qml.popupDialog0.show(text, icon, hint, subtext, screen)
+        break
       case 1:
-        this.qml.popupDialog1.show(text, icon, hint, subtext, screen);
-        break;
+        this.qml.popupDialog1.show(text, icon, hint, subtext, screen)
+        break
       case 2:
-        this.qml.popupDialog2.show(text, icon, hint, subtext, screen);
-        break;
+        this.qml.popupDialog2.show(text, icon, hint, subtext, screen)
+        break
       case 3:
-        this.qml.popupDialog3.show(text, icon, hint, subtext, screen);
-        break;
+        this.qml.popupDialog3.show(text, icon, hint, subtext, screen)
+        break
       case 4:
-        this.qml.popupDialog4.show(text, icon, hint, subtext, screen);
-        break;
+        this.qml.popupDialog4.show(text, icon, hint, subtext, screen)
+        break
     }
   }
 
@@ -534,25 +521,23 @@ export class DriverImpl implements Driver {
 
   public onNumberDesktopsChanged(oldNumDesktops: number): void {
     this.log.log(
-      `onNumberDesktopsChanged from ${oldNumDesktops} to ${
-        this.proxy.workspace().desktops
-      }`
-    );
-    if (this.proxy.workspace().desktops < 2) {
-      this.log.log("Too few desktops! Adding one desktop.");
-      this.proxy.workspace().desktops++;
+      `onNumberDesktopsChanged from ${oldNumDesktops} to ${this.kwinApi.workspace.desktops}`
+    )
+    if (this.kwinApi.workspace.desktops < 2) {
+      this.log.log('Too few desktops! Adding one desktop.')
+      this.kwinApi.workspace.desktops++
     }
   }
 
   public drop(): void {
-    this.log.log(`Dropping all registered callbacks... Goodbye.`);
+    this.log.log(`Dropping all registered callbacks... Goodbye.`)
     for (const pair of this.registeredConnections) {
       try {
-        pair.signal.disconnect(pair.callback);
+        pair.signal.disconnect(pair.callback)
       } catch (e: any) {
         // Error is thrown, when the object is already deleted,
         // ignore it then and delete other callbacks
-        this.log.log(`Callback was already deleted. Ignoring it.`);
+        this.log.log(`Callback was already deleted. Ignoring it.`)
       }
     }
   }
@@ -564,17 +549,17 @@ export class DriverImpl implements Driver {
    */
   private connect(signal: QSignal, handler: (..._: any[]) => void): void {
     const unboundCallback = (...args: any[]): void => {
-      this.enter(() => handler.apply(this, args));
-    };
+      this.enter(() => handler.apply(this, args))
+    }
 
     const pair = {
       signal: signal,
       callback: unboundCallback,
-    };
+    }
 
-    this.registeredConnections.push(pair);
+    this.registeredConnections.push(pair)
 
-    signal.connect(pair.callback);
+    signal.connect(pair.callback)
   }
 
   /**
@@ -588,23 +573,23 @@ export class DriverImpl implements Driver {
    */
   private enter(callback: () => void): void {
     if (this.entered) {
-      return;
+      return
     }
 
-    this.entered = true;
+    this.entered = true
     try {
-      callback();
+      callback()
     } catch (e: any) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      this.log.log(`Oops! ${e.name}: ${e.message}. `);
+      this.log.log(`Oops! ${e.name}: ${e.message}. `)
     } finally {
-      this.entered = false;
+      this.entered = false
     }
   }
 
   private bindWindowEvents(window: EngineWindow, client: KWin.Client): void {
-    let moving = false;
-    let resizing = false;
+    let moving = false
+    let resizing = false
 
     this.connect(
       client.windowClosed,
@@ -615,77 +600,73 @@ export class DriverImpl implements Driver {
         //   } ${toplevel} ${deleted} ${this.kwinApi.workspace.supportInformation()}`
         // );
       }
-    );
+    )
 
     this.connect(client.moveResizedChanged, () => {
       this.log.log([
-        "moveResizedChanged",
+        'moveResizedChanged',
         { window, move: client.move, resize: client.resize },
-      ]);
+      ])
       if (moving !== client.move) {
-        moving = client.move;
+        moving = client.move
         if (moving) {
-          this.controller.onWindowMoveStart(window);
+          this.controller.onWindowMoveStart(window)
         } else {
-          this.controller.onWindowMoveOver(window);
+          this.controller.onWindowMoveOver(window)
         }
       }
       if (resizing !== client.resize) {
-        resizing = client.resize;
+        resizing = client.resize
         if (resizing) {
-          this.controller.onWindowResizeStart(window);
+          this.controller.onWindowResizeStart(window)
         } else {
-          this.controller.onWindowResizeOver(window);
+          this.controller.onWindowResizeOver(window)
         }
       }
-    });
+    })
 
     this.connect(client.frameGeometryChanged, () => {
-      this.log.log(`frameGeometryChanged`);
+      this.log.log(`frameGeometryChanged`)
       if (moving || client.move) {
-        this.controller.onWindowMove(window);
+        this.controller.onWindowMove(window)
       } else if (resizing || client.resize) {
-        this.controller.onWindowResize(window);
+        this.controller.onWindowResize(window)
       } else {
         if (!window.actualGeometry.equals(window.geometry)) {
-          this.controller.onWindowGeometryChanged(window);
+          this.controller.onWindowGeometryChanged(window)
         }
       }
-    });
+    })
 
     this.connect(client.fullScreenChanged, () => {
-      this.controller.onFullScreenChanged(window);
-    });
+      this.controller.onFullScreenChanged(window)
+    })
 
     this.connect(client.activeChanged, () => {
       if (client.active) {
-        this.controller.onWindowFocused(window);
+        this.controller.onWindowFocused(window)
       }
-    });
+    })
 
     this.connect(client.screenChanged, () => {
-<<<<<<< HEAD
-      const oldSurface = window.window.surface;
+      const oldSurface = window.window.surface
 
       for (const surf of this.controller.screens()) {
         if ((surf as DriverSurfaceImpl).screen == client.screen) {
-          window.surface = surf;
-          break;
+          window.surface = surf
+          break
         }
       }
 
-      this.controller.onWindowScreenChanged(window, oldSurface);
-=======
-      this.controller.onWindowScreenChanged(window);
->>>>>>> origin/master
-    });
+      this.controller.onWindowScreenChanged(window, oldSurface)
+    })
 
     this.connect(client.activitiesChanged, () =>
       this.controller.onWindowChanged(
         window,
-        "activity=" + client.activities.join(",")
+        'activity=' + client.activities.join(',')
       )
-    );
+    )
 
     this.connect(client.desktopChanged, () => {
       // don't allow kwin moving a window to the hidden desktop
@@ -693,82 +674,82 @@ export class DriverImpl implements Driver {
         window.desktop == this.kwinApi.workspace.desktops &&
         !window.window.hidden
       ) {
-        const badDesktop = window.desktop;
-        window.desktop = this.kwinApi.workspace.currentDesktop;
+        const badDesktop = window.desktop
+        window.desktop = this.kwinApi.workspace.currentDesktop
 
-        this.log.log(`disallowing move to desktop ${badDesktop} ${window}`);
+        this.log.log(`disallowing move to desktop ${badDesktop} ${window}`)
         this.showNotification(
           `Don't use desktop ${badDesktop}`,
           undefined,
           undefined,
           undefined,
           this.kwinApi.workspace.activeScreen
-        );
-        return;
+        )
+        return
       } else if (window.desktop == this.kwinApi.workspace.desktops) {
         // we moved it ourselves to hide it; ignore the event
-        return;
+        return
       }
       // it's a legitimate move to another desktop, so handle it
 
-      this.controller.onWindowDesktopChanged(window);
-    });
+      this.controller.onWindowDesktopChanged(window)
+    })
 
     this.connect(client.shadeChanged, () => {
-      this.controller.onWindowShadeChanged(window);
-    });
+      this.controller.onWindowShadeChanged(window)
+    })
 
     this.connect(
       client.clientMaximizedStateChanged,
       (win: KWin.Client, h: boolean, v: boolean) => {
-        this.log.log(`clientMaximizedStateChanged ${h} ${v}`);
-        this.controller.onWindowMaximizeChanged(window, h || v);
+        this.log.log(`clientMaximizedStateChanged ${h} ${v}`)
+        this.controller.onWindowMaximizeChanged(window, h || v)
       }
-    );
+    )
   }
 }
 
 interface SignalCallbackPair {
-  signal: QSignal;
-  callback: (...args: any[]) => void;
+  signal: QSignal
+  callback: (...args: any[]) => void
 }
 
 /**
  * Wrapper map type.
  */
 class WrapperMap<F, T> {
-  private items: { [key: string]: T };
+  private items: { [key: string]: T }
 
   constructor(
     public readonly hasher: (item: F) => string,
     public readonly wrapper: (item: F) => T
   ) {
-    this.items = {};
+    this.items = {}
   }
 
   public add(item: F): T {
-    const key = this.hasher(item);
+    const key = this.hasher(item)
 
     if (this.items[key] !== undefined) {
-      throw "WrapperMap: the key [" + key + "] already exists!";
+      throw 'WrapperMap: the key [' + key + '] already exists!'
     }
 
-    const wrapped = this.wrapper(item);
-    this.items[key] = wrapped;
-    return wrapped;
+    const wrapped = this.wrapper(item)
+    this.items[key] = wrapped
+    return wrapped
   }
 
   public get(item: F): T | null {
-    const key = this.hasher(item);
-    return this.items[key] || null;
+    const key = this.hasher(item)
+    return this.items[key] || null
   }
 
   public getByKey(key: string): T | null {
-    return this.items[key] || null;
+    return this.items[key] || null
   }
 
   public remove(item: F): boolean {
-    const key = this.hasher(item);
-    return delete this.items[key];
+    const key = this.hasher(item)
+    return delete this.items[key]
   }
 }

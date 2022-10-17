@@ -235,9 +235,14 @@ export class DriverWindowImpl implements DriverWindow {
     }
 
     const desktop =
-      this.client.desktop >= 0
-        ? this.client.desktop
-        : this.kwinApi.workspace.currentDesktop
+      this.desktop >= 0 ? this.desktop : this.kwinApi.workspace.currentDesktop
+
+    const group = this.group
+
+    //TODO return null if our group isn't currently shown on any surface
+    if (this.screen === null) {
+      return null
+    }
 
     return new DriverSurfaceImpl(
       this.screen,
@@ -245,7 +250,9 @@ export class DriverWindowImpl implements DriverWindow {
       desktop,
       this.qml.activityInfo,
       this.config,
-      this.kwinApi
+      this.proxy,
+      this.kwinApi,
+      this.log
     )
   }
 
@@ -313,10 +320,10 @@ export class DriverWindowImpl implements DriverWindow {
     this.log.log(`set window hidden ${hide} ${this}`)
     this._hidden = hide
 
-    if (hide && this.client.desktop != this.proxy.workspace().desktops) {
+    if (hide && this.client.desktop != this.kwinApi.workspace.desktops) {
       this._desktop = this.client.desktop
-      this.desktop = this.proxy.workspace().desktops
-    } else if (this.client.desktop == this.proxy.workspace().desktops) {
+      this.desktop = this.kwinApi.workspace.desktops
+    } else if (this.client.desktop == this.kwinApi.workspace.desktops) {
       this.client.desktop = this._desktop
     }
   }
@@ -333,6 +340,8 @@ export class DriverWindowImpl implements DriverWindow {
     public readonly client: KWin.Client,
     private qml: Bismuth.Qml.Main,
     private config: Config,
+    private log: Log,
+    private proxy: TSProxy,
     private kwinApi: KWin.Api
   ) {
     this.id = DriverWindowImpl.generateID(client)
@@ -426,8 +435,8 @@ export class DriverWindowImpl implements DriverWindow {
         const area = Rect.fromQRect(
           this.kwinApi.workspace.clientArea(
             0, // This is placement area
-            this.client.screen,
-            this.kwinApi.workspace.currentDesktop
+            this.surface.screen,
+            this.client.desktop
           )
         )
         if (!area.includes(geometry)) {

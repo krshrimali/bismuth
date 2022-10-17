@@ -13,6 +13,8 @@
 
 #include "config.hpp"
 #include "controller.hpp"
+#include "engine/engine.hpp"
+#include "plasma-api/api.hpp"
 #include "ts-proxy.hpp"
 
 class CorePlugin : public QQmlExtensionPlugin
@@ -23,9 +25,6 @@ class CorePlugin : public QQmlExtensionPlugin
 public:
     void registerTypes(const char *uri) override;
 };
-
-namespace Bismuth
-{
 
 class Core : public QQuickItem
 {
@@ -51,6 +50,6 @@ private:
     std::unique_ptr<Bismuth::Controller> m_controller; ///< Legacy TS Backend proxy
     std::unique_ptr<TSProxy> m_tsProxy; ///< Legacy TS Backend proxy
     std::unique_ptr<Bismuth::Config> m_config;
+    std::unique_ptr<PlasmaApi::Api> m_plasmaApi;
+    std::unique_ptr<Bismuth::Engine> m_engine;
 };
-
-}

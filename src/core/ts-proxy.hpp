@@ -9,9 +9,7 @@
 
 #include "config.hpp"
 #include "controller.hpp"
-
-namespace Bismuth
-{
+#include "plasma-api/api.hpp"
 
 /**
  * Proxy object for the legacy TS backend.
@@ -20,7 +18,7 @@ class TSProxy : public QObject
 {
     Q_OBJECT
 public:
-    TSProxy(QQmlEngine *, Bismuth::Controller &, Bismuth::Config &);
+    TSProxy(QQmlEngine *, Bismuth::Controller &, PlasmaApi::Api &, Bismuth::Config &);
 
     /**
      * Returns the config usable in the legacy TypeScript logic
@@ -40,6 +38,11 @@ public:
     Q_INVOKABLE void setSurfaceGroup(int desktop, int screen, int groupID);
 
     /**
+     * Returns the workspace instance
+     */
+    Q_INVOKABLE QJSValue workspace();
+
+    /**
      * Register the actions from the legacy backend
      * @param tsaction
      */
@@ -50,10 +53,13 @@ public:
      */
     Q_INVOKABLE void log(const QJSValue &);
 
+    Q_INVOKABLE void setJsController(const QJSValue &);
+    QJSValue jsController();
+
 private:
     QQmlEngine *m_engine;
     Bismuth::Config &m_config;
     Bismuth::Controller &m_controller;
+    PlasmaApi::Api &m_plasmaApi;
+    QJSValue m_jsController;
 };
-
-}

@@ -98,6 +98,15 @@ export interface Engine {
   resizeWindow(window: EngineWindow, dir: CompassDirection, step: Step): void;
 
   /**
+   * Re-apply window geometry, computed by layout algorithm.
+   *
+   * Sometimes applications move or resize windows without user intervention,
+   * which is straight against the purpose of tiling WM. This operation
+   * move/resize such windows back to where/how they should be.
+   */
+  enforceSize(window: EngineWindow): void;
+
+  /**
    * @returns the layout we have on the surface of the active window
    */
   currentLayoutOnCurrentSurface(): WindowsLayout;
@@ -479,6 +488,12 @@ export class EngineImpl implements Engine {
 
   public currentWindow(): EngineWindow | null {
     return this.controller.currentWindow;
+  }
+
+  public enforceSize(window: EngineWindow): void {
+    if (window.tiled && !window.actualGeometry.equals(window.geometry)) {
+      window.commit();
+    }
   }
 
   public manage(window: EngineWindow): void {

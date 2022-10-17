@@ -55,7 +55,9 @@ export class DriverSurfaceImpl implements DriverSurface {
     public readonly desktop: number,
     private activityInfo: Plasma.TaskManager.ActivityInfo,
     private config: Config,
-    private kwinApi: KWin.Api
+    private proxy: TSProxy,
+    private kwinApi: KWin.Api,
+    private log: Log
   ) {
     this.id = this.generateId()
     this._group = 0
@@ -88,7 +90,9 @@ export class DriverSurfaceImpl implements DriverSurface {
       this.desktop + 1,
       this.activityInfo,
       this.config,
-      this.kwinApi
+      this.proxy,
+      this.kwinApi,
+      this.log
     )
   }
 
